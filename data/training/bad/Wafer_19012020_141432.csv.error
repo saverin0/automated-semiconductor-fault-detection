@@ -1,5 +1,5 @@
 Error: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
-Timestamp: 2025-05-13 02:00:14.730357
+Timestamp: 2025-05-13 02:04:39.415346
 Filename Pattern: ^wafer_\d{8}_\d{6}\.csv$
 Mode: training
 Schema File: /workspaces/automated-semiconductor-fault-detection/schema/schema_training.json

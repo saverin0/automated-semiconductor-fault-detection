@@ -40,3 +40,37 @@ Good files: 16 (84.2%)
 Bad files: 3 (15.8%)
 Schema file used: /workspaces/automated-semiconductor-fault-detection/schema/schema_prediction.json
 ============================================================
+2025-05-13 02:04:39,421 INFO: Initialized prediction schema with 591 columns
+2025-05-13 02:04:39,421 INFO: First few columns: wafer, Sensor - 1, Sensor - 2, Sensor - 3, Sensor - 4
+2025-05-13 02:04:39,421 INFO: Last column: Sensor - 590
+2025-05-13 02:04:39,425 INFO: ============================================================
+2025-05-13 02:04:39,426 INFO: === PREDICTION Validation started at 2025-05-13 02:04:39 ===
+2025-05-13 02:04:39,426 INFO: ============================================================
+2025-05-13 02:04:39,426 INFO: Found 19 CSV files to process
+2025-05-13 02:04:39,428 INFO: [Good] wafer_29012020_060756.csv
+2025-05-13 02:04:39,430 INFO: [Good] wafer_20022020_090716.csv
+2025-05-13 02:04:39,432 INFO: [Good] wafer_23012020_041211.csv
+2025-05-13 02:04:39,432 INFO: [Good] wafer_13012020_090817.csv
+2025-05-13 02:04:39,434 INFO: [Bad] Wafer_14012020_113045.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-13 02:04:39,436 INFO: [Good] wafer_27012020_080911.csv
+2025-05-13 02:04:39,440 INFO: [Bad] Wafer_13012020_141000.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-13 02:04:39,440 INFO: [Good] wafer_16012020_051629.csv
+2025-05-13 02:04:39,440 INFO: [Good] wafer_07012020_041011.csv
+2025-05-13 02:04:39,444 INFO: [Good] wafer_28042020_031911.csv
+2025-05-13 02:04:39,446 INFO: [Good] wafer_29012020_050617.csv
+2025-05-13 02:04:39,447 INFO: [Good] wafer_28012020_051011.csv
+2025-05-13 02:04:39,448 INFO: [Good] wafer_21012020_080913.csv
+2025-05-13 02:04:39,448 INFO: [Good] wafer_28012020_090817.csv
+2025-05-13 02:04:39,451 INFO: [Good] wafer_23012020_011008.csv
+2025-05-13 02:04:39,451 INFO: [Good] wafer_20012020_090819.csv
+2025-05-13 02:04:39,451 INFO: [Good] wafer_22022020_041119.csv
+2025-05-13 02:04:39,453 INFO: [Bad] Wafer_15010_130532.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-13 02:04:39,454 INFO: [Good] wafer_31012020_090811.csv
+2025-05-13 02:04:39,455 INFO: 
+============================================================
+Prediction validation complete:
+Total files processed: 19
+Good files: 16 (84.2%)
+Bad files: 3 (15.8%)
+Schema file used: /workspaces/automated-semiconductor-fault-detection/schema/schema_prediction.json
+============================================================
