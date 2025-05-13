@@ -1,0 +1,17 @@
+2025-05-13 01:53:50,357 - INFO - ============================================================
+2025-05-13 01:53:50,357 - INFO - Starting Wafer Data Processing Pipeline
+2025-05-13 01:53:50,357 - INFO - Mode: both
+2025-05-13 01:53:50,357 - INFO - ============================================================
+2025-05-13 01:53:50,357 - INFO - 
+Step 1: Creating JSON Schema
+2025-05-13 01:53:50,358 - INFO - ============================================================
+2025-05-13 01:53:50,358 - INFO - Starting schema creation process...
+2025-05-13 01:53:50,358 - INFO - ============================================================
+2025-05-13 01:53:50,362 - INFO - Schema creation completed successfully
+2025-05-13 01:53:50,362 - INFO - 
+Step 2: Running Data Validation
+2025-05-13 01:53:50,362 - INFO - ============================================================
+2025-05-13 01:53:50,362 - INFO - Starting data validation process...
+2025-05-13 01:53:50,363 - INFO - ============================================================
+2025-05-13 01:53:50,383 - ERROR - Error in data validation: [Errno 2] No such file or directory: '/workspaces/automated-semiconductor-fault-detection/schema_training.json'
+2025-05-13 01:53:50,384 - ERROR - Data validation failed.
