@@ -13,14 +13,17 @@ This project aims to automate the detection of faults in semiconductor manufactu
 
 ## Project Structure
 
-.
-├── data/ # Raw and processed data files
-├── logs/ # Log files for tracking pipeline execution
-├── schema/ # Data schema definitions for validation
-├── src/ # Source code for validation, transformation, modeling, etc.
-├── .env # Environment variables and configuration
-├── LICENSE # Project license (GPL-3.0)
-├── README.md # Project documentation
+```
+automated-semiconductor-fault-detection/
+├── data/         # Raw and processed datasets
+├── logs/         # Logs for pipeline execution and debugging
+├── schema/       # Data schema definitions for validation
+├── src/          # Source code for validation, preprocessing, modeling, etc.
+├── .env          # Environment variable definitions
+├── LICENSE       # License information (GPL-3.0)
+├── README.md     # Project documentation
+```
+
 
 
 ## Getting Started
