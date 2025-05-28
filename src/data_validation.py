@@ -1,43 +1,38 @@
-import os
-import re
-import shutil
-import csv
-import datetime
-import logging
-import sys
-import hashlib
-import time
-from typing import List, Tuple, Dict, Optional
-from functools import lru_cache
-from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
-from dataclasses import dataclass
-from threading import Lock
-
 from dotenv import load_dotenv
+from pathlib import Path
+import os
+import logging
+import re
+import csv
+import shutil
+import datetime
+import hashlib
+from concurrent.futures import ThreadPoolExecutor
+from threading import Lock
+from typing import Dict, List, Optional, Tuple
 from src.utils.path_utils import validate_env_path, ensure_path_exists
+from dataclasses import dataclass
+from functools import lru_cache
 
 # --- Fallback logging setup for early errors ---
 load_dotenv()
 BASE_DIR = Path(os.getenv("BASE_DIR"))
-if not BASE_DIR:
-    raise RuntimeError("BASE_DIR must be set in .env")
 FALLBACK_LOGS_DIR = os.getenv("FALLBACK_LOGS_DIR")
 FALLBACK_LOG_FILE = os.getenv("FALLBACK_LOG_FILE")
+if not BASE_DIR or not FALLBACK_LOGS_DIR or not FALLBACK_LOG_FILE:
+    raise RuntimeError("BASE_DIR, FALLBACK_LOGS_DIR, and FALLBACK_LOG_FILE must be set in .env")
 
-if not FALLBACK_LOGS_DIR or not FALLBACK_LOG_FILE:
-    raise RuntimeError("FALLBACK_LOGS_DIR and FALLBACK_LOG_FILE must be set in .env")
-
-logs_dir = validate_env_path(FALLBACK_LOGS_DIR, BASE_DIR)
-log_file = validate_env_path(FALLBACK_LOG_FILE, logs_dir)
-ensure_path_exists(logs_dir)
-ensure_path_exists(log_file, is_file=True)
+FALLBACK_LOGS_DIR = validate_env_path(FALLBACK_LOGS_DIR, BASE_DIR)
+FALLBACK_LOG_FILE = validate_env_path(FALLBACK_LOG_FILE, FALLBACK_LOGS_DIR)
+ensure_path_exists(FALLBACK_LOGS_DIR)
+ensure_path_exists(FALLBACK_LOG_FILE, is_file=True)
 
 logging.basicConfig(
-    filename=str(log_file),
+    filename=FALLBACK_LOG_FILE,
     level=logging.INFO,
     format='%(asctime)s %(levelname)s %(message)s'
 )
+logger = logging.getLogger(__name__)
 
 def is_safe_path(base_dir: Path, target_path: Path) -> bool:
     """Ensure target_path is within base_dir and does not contain suspicious elements."""
@@ -144,7 +139,7 @@ try:
 except (KeyError, ValueError) as e:
     msg = f"Error: Invalid or missing environment variable: {e}. Please check your .env file."
     logging.error(msg, exc_info=True)
-    sys.exit(1)
+    raise RuntimeError("Your error message")
 
 def get_logger(log_file: str, mode: str) -> logging.Logger:
     """Get a logger with a specific file handler for each mode"""
@@ -183,7 +178,7 @@ class FileValidator:
             self._init_schema()
         except Exception as e:
             self.logger.error(f"Failed to initialize validator: {e}", exc_info=True)
-            sys.exit(1)
+            raise RuntimeError("Your error message")
 
     def _init_schema(self) -> None:
         try:
@@ -193,7 +188,7 @@ class FileValidator:
             self.logger.info(f"Last column: {self.expected_column_names[-1]}")
         except Exception as e:
             self.logger.error(f"Failed to initialize schema: {e}", exc_info=True)
-            sys.exit(1)
+            raise RuntimeError("Your error message")
 
     @staticmethod
     @lru_cache(maxsize=8)
@@ -220,7 +215,7 @@ class FileValidator:
     def setup_directories(self) -> None:
         if not self.input_dir.exists():
             self.logger.error(f"Input directory does not exist: {self.input_dir}")
-            sys.exit(1)
+            raise RuntimeError("Your error message")
         else:
             self.logger.info(f"Input directory exists: {self.input_dir}")
 
@@ -233,7 +228,7 @@ class FileValidator:
                 self.logger.info(f"Created directory: {path}")
             except Exception as e:
                 self.logger.error(f"Failed to create directory {path}: {e}", exc_info=True)
-                sys.exit(1)
+                raise RuntimeError("Your error message")
 
         ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.logger.info("="*60)
@@ -392,11 +387,11 @@ class FileValidator:
         try:
             if not self.input_dir.exists():
                 self.logger.error(f"Input directory does not exist: {self.input_dir}")
-                sys.exit(1)
+                raise RuntimeError("Your error message")
             entries = [e for e in os.scandir(self.input_dir) if e.is_file() and e.name.endswith(CSV_EXTENSION)]
         except Exception as e:
             self.logger.error(f"Failed to scan input directory: {e}", exc_info=True)
-            sys.exit(1)
+            raise RuntimeError("Your error message")
 
         if not entries:
             self.logger.warning(f"No CSV files found in {self.input_dir}")
@@ -444,7 +439,7 @@ def main():
         training_validator.summary()
     except Exception as e:
         logging.error(f"Training validation failed: {e}", exc_info=True)
-        sys.exit(1)
+        raise RuntimeError("Your error message")
 
     try:
         logging.info("Step 2: Running Prediction Validation...")
@@ -454,7 +449,7 @@ def main():
         prediction_validator.summary()
     except Exception as e:
         logging.error(f"Prediction validation failed: {e}", exc_info=True)
-        sys.exit(1)
+        raise RuntimeError("Your error message")
 
     logging.info("Validation process complete!")
 

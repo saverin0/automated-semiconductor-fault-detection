@@ -4,14 +4,15 @@ import logging
 import argparse
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from dotenv import load_dotenv
 from src.utils.path_utils import validate_env_path, ensure_path_exists
+from src import create_json_schema
+from src import data_validation
 
 # Add the src directory to Python path
 current_dir = Path(__file__).resolve().parent
 project_root = current_dir.parent
-sys.path.append(str(project_root))
 
 # Load environment variables from .env file
 load_dotenv(project_root / '.env')
@@ -112,10 +113,9 @@ def run_schema_creation(config: Dict[str, str], mode: str) -> bool:
     logger.info("="*60)
 
     try:
-        from src import create_json_schema
         schema_creator = create_json_schema.SchemaCreator(
-            output_training="schema_training.json",
-            output_prediction="schema_prediction.json"
+            schema_dir=Path(os.getenv("SCHEMA_DIR", "schema")),
+            logger=logger
         )
         schema_creator.generate_schema_training()
         schema_creator.generate_schema_prediction()
@@ -132,7 +132,6 @@ def run_data_validation(config: Dict[str, str], mode: str) -> bool:
     logger.info("="*60)
 
     try:
-        from src import data_validation
         if mode in ['training', 'both']:
             training_validator = data_validation.FileValidator(data_validation.TRAINING_CONFIG)
             training_validator.setup_directories()

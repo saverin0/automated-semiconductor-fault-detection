@@ -1,9 +1,9 @@
-from dotenv import load_dotenv
-from pathlib import Path
 import os
 import json
 import logging
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Dict, List
+from dotenv import load_dotenv
 from src.utils.path_utils import validate_env_path, ensure_path_exists
 
 # --- Load environment variables ---
@@ -79,6 +79,20 @@ class SchemaCreator:
             self.logger.error(f"Failed to create schema {filename}: {e}", exc_info=True)
             return None
 
+    def generate_schema_training(self):
+        self.generate_schema(
+            filename=TRAINING_SCHEMA_FILENAME,
+            num_columns=TRAINING_NUM_COLUMNS,
+            include_output=True
+        )
+
+    def generate_schema_prediction(self):
+        self.generate_schema(
+            filename=PREDICTION_SCHEMA_FILENAME,
+            num_columns=PREDICTION_NUM_COLUMNS,
+            include_output=False
+        )
+
 TRAINING_SCHEMA_FILENAME = os.getenv("TRAINING_SCHEMA_FILENAME")
 PREDICTION_SCHEMA_FILENAME = os.getenv("PREDICTION_SCHEMA_FILENAME")
 TRAINING_NUM_COLUMNS = os.getenv("TRAINING_NUM_COLUMNS")
@@ -96,19 +110,8 @@ def main() -> int:
         schema_dir = BASE_DIR / 'schema'
         ensure_path_exists(schema_dir)
         creator = SchemaCreator(schema_dir, logger)
-        training_schema = creator.generate_schema(
-            filename=TRAINING_SCHEMA_FILENAME,
-            num_columns=TRAINING_NUM_COLUMNS,
-            include_output=True
-        )
-        prediction_schema = creator.generate_schema(
-            filename=PREDICTION_SCHEMA_FILENAME,
-            num_columns=PREDICTION_NUM_COLUMNS,
-            include_output=False
-        )
-        if not training_schema or not prediction_schema:
-            logger.error("One or more schemas failed to be created.")
-            return 1
+        creator.generate_schema_training()
+        creator.generate_schema_prediction()
         logger.info("Schema creation process completed successfully.")
         return 0
     except Exception as e:
