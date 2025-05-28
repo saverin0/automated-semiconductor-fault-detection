@@ -1,2 +1,0 @@
-2025-05-13 01:46:54,447 - ERROR - Critical error in main process: Missing required environment variables: TRAINING_INPUT_DIR, TRAINING_GOOD_DIR, TRAINING_BAD_DIR, TRAINING_SCHEMA_FILE, TRAINING_LOG_FILE, PREDICTION_INPUT_DIR, PREDICTION_GOOD_DIR, PREDICTION_BAD_DIR, PREDICTION_SCHEMA_FILE, PREDICTION_LOG_FILE
-Please ensure all required variables are set in the .env file.

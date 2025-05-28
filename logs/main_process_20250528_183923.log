@@ -1,0 +1,185 @@
+2025-05-28 18:39:23,957 - INFO - ============================================================
+2025-05-28 18:39:23,957 - INFO - Starting Wafer Data Processing Pipeline
+2025-05-28 18:39:23,957 - INFO - Mode: both
+2025-05-28 18:39:23,958 - INFO - ============================================================
+2025-05-28 18:39:23,958 - INFO - 
+Step 1: Creating JSON Schema
+2025-05-28 18:39:23,958 - INFO - ============================================================
+2025-05-28 18:39:23,958 - INFO - Starting schema creation process...
+2025-05-28 18:39:23,958 - INFO - ============================================================
+2025-05-28 18:39:23,961 - INFO - Schema directory ensured at: /workspaces/automated-semiconductor-fault-detection/schema
+2025-05-28 18:39:23,963 - INFO - Training schema created at: /workspaces/automated-semiconductor-fault-detection/schema/schema_training.json
+2025-05-28 18:39:23,965 - INFO - Prediction schema created at: /workspaces/automated-semiconductor-fault-detection/schema/schema_prediction.json
+2025-05-28 18:39:23,965 - INFO - Schema creation completed successfully
+2025-05-28 18:39:23,965 - INFO - 
+Step 2: Running Data Validation
+2025-05-28 18:39:23,965 - INFO - ============================================================
+2025-05-28 18:39:23,965 - INFO - Starting data validation process...
+2025-05-28 18:39:23,966 - INFO - ============================================================
+2025-05-28 18:39:23,986 - INFO - Validator initialized for mode: training
+2025-05-28 18:39:23,996 - INFO - Initialized training schema with 592 columns
+2025-05-28 18:39:23,996 - INFO - First few columns: wafer, Sensor - 1, Sensor - 2, Sensor - 3, Sensor - 4
+2025-05-28 18:39:23,996 - INFO - Last column: Output
+2025-05-28 18:39:23,997 - INFO - Input directory exists: /workspaces/automated-semiconductor-fault-detection/data/training/input
+2025-05-28 18:39:24,004 - INFO - Removed existing directory: /workspaces/automated-semiconductor-fault-detection/data/training/good
+2025-05-28 18:39:24,005 - INFO - Created directory: /workspaces/automated-semiconductor-fault-detection/data/training/good
+2025-05-28 18:39:24,018 - INFO - Removed existing directory: /workspaces/automated-semiconductor-fault-detection/data/training/bad
+2025-05-28 18:39:24,018 - INFO - Created directory: /workspaces/automated-semiconductor-fault-detection/data/training/bad
+2025-05-28 18:39:24,019 - INFO - ============================================================
+2025-05-28 18:39:24,019 - INFO - === TRAINING Validation started at 2025-05-28 18:39:24 ===
+2025-05-28 18:39:24,019 - INFO - ============================================================
+2025-05-28 18:39:24,019 - INFO - Found 41 CSV files to process
+2025-05-28 18:39:24,023 - INFO - Processing file: Waferdefault_15010_130532.csv | SHA256: 1e8cfa7012797e9bda8870cb2814783f3118a31dbafe26d769cb4812e1f2a57c
+2025-05-28 18:39:24,025 - INFO - Processing file: Wafer_11012020_151432.csv | SHA256: 1af749075613abddb2e6a1fd3de13e30553d13bf7ab656ee71ba7321f2df6351
+2025-05-28 18:39:24,025 - INFO - [Bad] Waferdefault_15010_130532.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,030 - INFO - Processing file: wafer_23012020_041211.csv | SHA256: 1d78b5f96648b0299c07b726a10626ec83e81e5a10b8a879f5028882a4543608
+2025-05-28 18:39:24,028 - INFO - [Bad] Wafer_11012020_151432.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,029 - INFO - Processing file: Wafer_24012020_150121.csv | SHA256: 17f450c9a6951e36d9e3ee73b40ee66d46b66764e5627e07c65e3f9d12be9839
+2025-05-28 18:39:24,027 - INFO - Processing file: wafer_29012020_060756.csv | SHA256: 32c908c1196125a8d724cd98004ddb20a9cf392fd1e58aa75dd05962e80ee3b7
+2025-05-28 18:39:24,032 - INFO - Processing file: wafer_17012020_125434.csv | SHA256: c6bc8191caaf5ecb5120712a2c61ac5cbfddde686b43e596265a0436069c975b
+2025-05-28 18:39:24,049 - INFO - [Bad] Wafer_24012020_150121.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,069 - INFO - Processing file: wafer_13012020_090817.csv | SHA256: 685c90f461117301ed5d154dfd0748d4ee01c220e4024d4c6d04aa9d9bda9999
+2025-05-28 18:39:24,082 - INFO - [Bad] wafer_17012020_125434.csv: Last column should be 'Output' or 'Good/Bad', got 'Sensor-590'
+2025-05-28 18:39:24,089 - INFO - Processing file: Wafer_fault_detection.csv | SHA256: 1e8cfa7012797e9bda8870cb2814783f3118a31dbafe26d769cb4812e1f2a57c
+2025-05-28 18:39:24,107 - INFO - [Bad] Wafer_fault_detection.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,109 - INFO - Processing file: Wafer_22012020_173245.csv | SHA256: f6eb27b375fa92aef9eff5b35c45d291d82515c9bb631c93e4b85639714dea57
+2025-05-28 18:39:24,113 - INFO - [Bad] Wafer_22012020_173245.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,122 - INFO - Processing file: Wafer_20012020_135132.csv | SHA256: d0ccb5357a68b0139100bc5eb49867e703846b270c8b2ede81dc5335c1e9ad1f
+2025-05-28 18:39:24,123 - INFO - [Bad] Wafer_20012020_135132.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,126 - INFO - Processing file: Wafer_15012020_130532.csv | SHA256: 1e8cfa7012797e9bda8870cb2814783f3118a31dbafe26d769cb4812e1f2a57c
+2025-05-28 18:39:24,145 - INFO - [Bad] Wafer_15012020_130532.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,157 - INFO - Processing file: wafer_20022020_090716.csv | SHA256: dd94e2657b6ccd312300818e47748148f52615d88a18bd73ed47a96359ab2442
+2025-05-28 18:39:24,207 - INFO - [Good] wafer_20022020_090716_dd94e265.csv
+2025-05-28 18:39:24,209 - INFO - [Good] wafer_29012020_060756_32c908c1.csv
+2025-05-28 18:39:24,210 - INFO - Processing file: Wafer_21012020_143634.csv | SHA256: 6b1c4b1c9ec22a8769fa7067b7e17e397936464419ab56dc8430954e080baac1
+2025-05-28 18:39:24,211 - INFO - Processing file: Wafer_25012020_142112.csv | SHA256: 3af8e7440f502ef4dc6b130271b49880ef07e8d4849b89ec85617ffccc3618fc
+2025-05-28 18:39:24,213 - INFO - [Good] wafer_23012020_041211_1d78b5f9.csv
+2025-05-28 18:39:24,215 - INFO - Processing file: Wafer_08012020_120000.csv | SHA256: d28fbfdaf56e6a2c7e5ae3eea998f60999e1ae653ba4849135228f56c1f757fc
+2025-05-28 18:39:24,216 - INFO - [Bad] Wafer_25012020_142112.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,216 - INFO - [Good] wafer_13012020_090817_685c90f4.csv
+2025-05-28 18:39:24,217 - INFO - [Bad] Wafer_21012020_143634.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,219 - INFO - [Bad] Wafer_08012020_120000.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,219 - INFO - Processing file: Wafer_07012020_223345.csv | SHA256: d3589d147389b466574f2a138a39394ca0c1b24e592f04cd3156cec9d0d806b5
+2025-05-28 18:39:24,221 - INFO - Processing file: wafer_27012020_080911.csv | SHA256: ba78fb9374372dadfbe21a2976eb904f91d85a8984ebba8bd37923632622a45a
+2025-05-28 18:39:24,222 - INFO - Processing file: wafer_16012020_134553.csv | SHA256: de0a888a8ee25bff68fd403afc58329c4cfc165167599c5f641e693d3bc78ff6
+2025-05-28 18:39:24,221 - INFO - Processing file: Wafer_14012020_113045.csv | SHA256: 8c450f9507c8f12fa0a614d77877fba95d43f8939d82a859351656c482cd9e77
+2025-05-28 18:39:24,225 - INFO - [Bad] Wafer_07012020_223345.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,225 - INFO - [Bad] wafer_16012020_134553.csv: Last column should be 'Output' or 'Good/Bad', got 'Sensor-590'
+2025-05-28 18:39:24,232 - INFO - Processing file: wafer_07012020_041011.csv | SHA256: e1e13189cb272301992b7556db7ced0c806a0359f15a5ae8e18c4cf117d6fa89
+2025-05-28 18:39:24,228 - INFO - [Bad] Wafer_14012020_113045.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,235 - INFO - Processing file: wafer_16012020_051629.csv | SHA256: b86db3f4308196a0307a51d86c2c6e6f2450ad1cfed3c91748fcb2da2857f29a
+2025-05-28 18:39:24,237 - INFO - Processing file: Wafer_text_130532.csv | SHA256: 1e8cfa7012797e9bda8870cb2814783f3118a31dbafe26d769cb4812e1f2a57c
+2025-05-28 18:39:24,241 - INFO - [Bad] Wafer_text_130532.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,246 - INFO - Processing file: Wafer_12012020_111213.csv | SHA256: 885ff212dedeac1eafc14e14abdf4aa314eb17b0d911c16f5287867de60876f9
+2025-05-28 18:39:24,258 - INFO - [Bad] Wafer_12012020_111213.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,259 - INFO - Processing file: Wafer_10012020_131534.csv | SHA256: 2987a53d1699ef807256d8ad5fc3c95395fbc73e073abe4353fc805e9c197337
+2025-05-28 18:39:24,265 - INFO - [Bad] Wafer_10012020_131534.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,266 - INFO - Processing file: Wafer_23012020_163456.csv | SHA256: 38bbceb64433f15fc54a384d97ee795fbf0e4e11dcd4e41010a936b94358c1cd
+2025-05-28 18:39:24,276 - INFO - [Bad] Wafer_23012020_163456.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,277 - INFO - Processing file: wafer_28042020_031911.csv | SHA256: a54dc98c16a63418e4a6022ab8bfef9f6fe36eff77b7226005996162a88c0010
+2025-05-28 18:39:24,327 - INFO - [Good] wafer_27012020_080911_ba78fb93.csv
+2025-05-28 18:39:24,345 - INFO - Processing file: Wafer_13012020_141000.csv | SHA256: 37af15e9f91a9fa1558dc0b22fdde4391efa663de025402f1eb2986745c9ccd7
+2025-05-28 18:39:24,345 - INFO - [Bad] Wafer_13012020_141000.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,346 - INFO - Processing file: wafer_21012020_080913.csv | SHA256: d1605198b504190166e0d0f65b2fc33d8a97da275c74e1d5a8f966ec283aee91
+2025-05-28 18:39:24,369 - INFO - [Good] wafer_16012020_051629_b86db3f4.csv
+2025-05-28 18:39:24,378 - INFO - Processing file: wafer_29012020_050617.csv | SHA256: 8b7ece090bae683a4dec75ac4e2a05854cf0207827d34b17b8f42dd9d9feb13c
+2025-05-28 18:39:24,389 - INFO - [Good] wafer_07012020_041011_e1e13189.csv
+2025-05-28 18:39:24,396 - INFO - Processing file: Wafer_07012020_000000.csv | SHA256: d509dbe7c1781869d5bd3fe753d3be87309c375eb4a11012ff42a6dfe3a273e0
+2025-05-28 18:39:24,396 - INFO - [Bad] Wafer_07012020_000000.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,402 - INFO - Processing file: wafer_28012020_051011.csv | SHA256: a6124fd085b7584302519d8c1c6a69d046b839c4ac3e3870dd34709e3db8a68b
+2025-05-28 18:39:24,405 - INFO - [Good] wafer_28042020_031911_a54dc98c.csv
+2025-05-28 18:39:24,410 - INFO - Processing file: wafer_28012020_090817.csv | SHA256: 57d4d4b20e3f9157ef6d232d7c1b7501268d64336b02ad42ebfb04014bbd7ee0
+2025-05-28 18:39:24,493 - INFO - [Good] wafer_21012020_080913_d1605198.csv
+2025-05-28 18:39:24,500 - INFO - Processing file: wafer_23012020_011008.csv | SHA256: ad2f1ded6ecad58b065ab74ad97d33845431887bc4a00e9a445234bb153669f9
+2025-05-28 18:39:24,500 - INFO - [Good] wafer_29012020_050617_8b7ece09.csv
+2025-05-28 18:39:24,503 - INFO - Processing file: Wafer12_20012.csv | SHA256: d509dbe7c1781869d5bd3fe753d3be87309c375eb4a11012ff42a6dfe3a273e0
+2025-05-28 18:39:24,504 - INFO - [Bad] Wafer12_20012.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,514 - INFO - Processing file: Wafer_15010_130532.csv | SHA256: 1e8cfa7012797e9bda8870cb2814783f3118a31dbafe26d769cb4812e1f2a57c
+2025-05-28 18:39:24,525 - INFO - [Bad] Wafer_15010_130532.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,526 - INFO - Processing file: wafer_22022020_041119.csv | SHA256: 418c0260c3383dd7f78b6f15d657ad1da0bfdeb2baabb1622ee1a809bfc9b166
+2025-05-28 18:39:24,528 - INFO - [Good] wafer_28012020_090817_57d4d4b2.csv
+2025-05-28 18:39:24,515 - INFO - [Good] wafer_28012020_051011_a6124fd0.csv
+2025-05-28 18:39:24,536 - INFO - Processing file: Wafer_19012020_141432.csv | SHA256: 98ce34cf9d4aa1c292be83ef032a09d25f1c8cc5071eb1c22b8c01da8b8c3c07
+2025-05-28 18:39:24,537 - INFO - Processing file: Wafer_18012020_121532.csv | SHA256: 3b728604e77f3bb16aef9a4d757c5931d1ef7fd1c273cb397311c9a10ab0987b
+2025-05-28 18:39:24,537 - INFO - [Bad] Wafer_19012020_141432.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,540 - INFO - [Bad] Wafer_18012020_121532.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,545 - INFO - Processing file: wafer_31012020_090811.csv | SHA256: e747459419f96d6c28de2d677979b88fbc793d5e855d539f7b36e5c6c896c323
+2025-05-28 18:39:24,546 - INFO - Processing file: wafer_20012020_090819.csv | SHA256: e0a35d2e6b52b2cefe3908043dfee1a889e0322cdb65dcf6982e6796d6af6333
+2025-05-28 18:39:24,631 - INFO - [Good] wafer_23012020_011008_ad2f1ded.csv
+2025-05-28 18:39:24,632 - INFO - Processing file: Wafer_12012020_111.csv | SHA256: 885ff212dedeac1eafc14e14abdf4aa314eb17b0d911c16f5287867de60876f9
+2025-05-28 18:39:24,638 - INFO - [Bad] Wafer_12012020_111.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,651 - INFO - [Good] wafer_22022020_041119_418c0260.csv
+2025-05-28 18:39:24,657 - INFO - [Good] wafer_31012020_090811_e7474594.csv
+2025-05-28 18:39:24,669 - INFO - [Good] wafer_20012020_090819_e0a35d2e.csv
+2025-05-28 18:39:24,670 - INFO - 
+============================================================
+Training validation complete:
+Total files processed: 41
+Good files: 16 (39.0%)
+Bad files: 25 (61.0%)
+Schema file used: /workspaces/automated-semiconductor-fault-detection/schema/schema_training.json
+============================================================
+2025-05-28 18:39:24,670 - INFO - Validator initialized for mode: prediction
+2025-05-28 18:39:24,670 - INFO - Initialized prediction schema with 591 columns
+2025-05-28 18:39:24,671 - INFO - First few columns: wafer, Sensor - 1, Sensor - 2, Sensor - 3, Sensor - 4
+2025-05-28 18:39:24,671 - INFO - Last column: Sensor - 590
+2025-05-28 18:39:24,672 - INFO - Input directory exists: /workspaces/automated-semiconductor-fault-detection/data/prediction/input
+2025-05-28 18:39:24,682 - INFO - Removed existing directory: /workspaces/automated-semiconductor-fault-detection/data/prediction/good
+2025-05-28 18:39:24,682 - INFO - Created directory: /workspaces/automated-semiconductor-fault-detection/data/prediction/good
+2025-05-28 18:39:24,683 - INFO - Removed existing directory: /workspaces/automated-semiconductor-fault-detection/data/prediction/bad
+2025-05-28 18:39:24,684 - INFO - Created directory: /workspaces/automated-semiconductor-fault-detection/data/prediction/bad
+2025-05-28 18:39:24,685 - INFO - ============================================================
+2025-05-28 18:39:24,685 - INFO - === PREDICTION Validation started at 2025-05-28 18:39:24 ===
+2025-05-28 18:39:24,685 - INFO - ============================================================
+2025-05-28 18:39:24,688 - INFO - Found 19 CSV files to process
+2025-05-28 18:39:24,691 - INFO - Processing file: wafer_29012020_060756.csv | SHA256: dc69dde3b71e2d392b4ee6028be61a07f7134a0b91cc1b991cf7a7cc9203b619
+2025-05-28 18:39:24,692 - INFO - Processing file: wafer_23012020_041211.csv | SHA256: c7d4f42494d75ad76cbfc97806c20761b675fac9bec58083b6e8266e98674aed
+2025-05-28 18:39:24,693 - INFO - Processing file: wafer_13012020_090817.csv | SHA256: f310cc16f60d99a5bc75ac4df28321e157e75f301f45a834ae67253b90e4b939
+2025-05-28 18:39:24,699 - INFO - Processing file: wafer_20022020_090716.csv | SHA256: e11fbddcc4f7cc1160c139095c53dc843794e30ed5e74052df373b4632d9f545
+2025-05-28 18:39:24,769 - INFO - [Good] wafer_20022020_090716_e11fbddc.csv
+2025-05-28 18:39:24,770 - INFO - Processing file: Wafer_14012020_113045.csv | SHA256: 8c450f9507c8f12fa0a614d77877fba95d43f8939d82a859351656c482cd9e77
+2025-05-28 18:39:24,775 - INFO - [Bad] Wafer_14012020_113045.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,777 - INFO - Processing file: wafer_27012020_080911.csv | SHA256: 9bc8f1bb0213a3e656fb353ea4e9c45d2f8d6c64222d4c349cb1c34ca49a738b
+2025-05-28 18:39:24,859 - INFO - [Good] wafer_23012020_041211_c7d4f424.csv
+2025-05-28 18:39:24,860 - INFO - Processing file: wafer_07012020_041011.csv | SHA256: d4032e73ac82247745ae4e8f1a6a0f8c5392dd05ceda1781e7147a3d633ff0fa
+2025-05-28 18:39:24,868 - INFO - [Good] wafer_13012020_090817_f310cc16.csv
+2025-05-28 18:39:24,876 - INFO - [Good] wafer_29012020_060756_dc69dde3.csv
+2025-05-28 18:39:24,880 - INFO - Processing file: wafer_16012020_051629.csv | SHA256: 2d99343e2cc7a5236613d9e81dc005b23698e13653aef8563d9f4a88cbf0b644
+2025-05-28 18:39:24,892 - INFO - Processing file: wafer_28042020_031911.csv | SHA256: bd3a9dc80a35d3d3cec73981dc492d4acf09e9a2ce9b9878f96fdc81af6f9543
+2025-05-28 18:39:24,927 - INFO - [Good] wafer_27012020_080911_9bc8f1bb.csv
+2025-05-28 18:39:24,937 - INFO - Processing file: Wafer_13012020_141000.csv | SHA256: 37af15e9f91a9fa1558dc0b22fdde4391efa663de025402f1eb2986745c9ccd7
+2025-05-28 18:39:24,961 - INFO - [Bad] Wafer_13012020_141000.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:24,964 - INFO - Processing file: wafer_21012020_080913.csv | SHA256: 4eb4a67bb3c53786c3d5ac4a5c4be423ca48853e813d1f828752c9166c248323
+2025-05-28 18:39:24,966 - INFO - [Good] wafer_07012020_041011_d4032e73.csv
+2025-05-28 18:39:24,967 - INFO - [Good] wafer_28042020_031911_bd3a9dc8.csv
+2025-05-28 18:39:24,980 - INFO - Processing file: wafer_28012020_051011.csv | SHA256: 1158116e9af6520f45231e98e38f565048e4e7159602887527bb30243824f24c
+2025-05-28 18:39:24,970 - INFO - Processing file: wafer_29012020_050617.csv | SHA256: 7c716747198da5f150fd1ef9a617c1bbfa00c30c622d5e0fee4426ac48ca47d7
+2025-05-28 18:39:24,983 - INFO - [Good] wafer_16012020_051629_2d99343e.csv
+2025-05-28 18:39:24,995 - INFO - Processing file: wafer_28012020_090817.csv | SHA256: 6431b072cb4694bfd186a82f4a53e3dd7cc9d35920cf235c423f76d575b2012e
+2025-05-28 18:39:25,076 - INFO - [Good] wafer_28012020_090817_6431b072.csv
+2025-05-28 18:39:25,077 - INFO - [Good] wafer_21012020_080913_4eb4a67b.csv
+2025-05-28 18:39:25,079 - INFO - Processing file: wafer_23012020_011008.csv | SHA256: 6fb5c03b6b6ca79cf4883a605e65e94cc769c9433a650caec34186de7fc9eb05
+2025-05-28 18:39:25,082 - INFO - Processing file: Wafer_15010_130532.csv | SHA256: 1e8cfa7012797e9bda8870cb2814783f3118a31dbafe26d769cb4812e1f2a57c
+2025-05-28 18:39:25,083 - INFO - [Good] wafer_29012020_050617_7c716747.csv
+2025-05-28 18:39:25,084 - INFO - Processing file: wafer_22022020_041119.csv | SHA256: 46b43bcdb21ff45db870011bf1d7b67315ebd5e916986a3dd6aec9f414e4129f
+2025-05-28 18:39:25,085 - INFO - [Bad] Wafer_15010_130532.csv: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
+2025-05-28 18:39:25,110 - INFO - Processing file: wafer_20012020_090819.csv | SHA256: ecf863339bff1623700b756eab106942b77b1248b68d7cf2ec5d4bd0c3735d6a
+2025-05-28 18:39:25,103 - INFO - [Good] wafer_28012020_051011_1158116e.csv
+2025-05-28 18:39:25,113 - INFO - Processing file: wafer_31012020_090811.csv | SHA256: 8b0775d27e750a8da8dd16038115d34db40c9ac2071b17026b813d38ce4a9337
+2025-05-28 18:39:25,124 - INFO - [Good] wafer_23012020_011008_6fb5c03b.csv
+2025-05-28 18:39:25,173 - INFO - [Good] wafer_22022020_041119_46b43bcd.csv
+2025-05-28 18:39:25,221 - INFO - [Good] wafer_20012020_090819_ecf86333.csv
+2025-05-28 18:39:25,223 - INFO - [Good] wafer_31012020_090811_8b0775d2.csv
+2025-05-28 18:39:25,223 - INFO - 
+============================================================
+Prediction validation complete:
+Total files processed: 19
+Good files: 16 (84.2%)
+Bad files: 3 (15.8%)
+Schema file used: /workspaces/automated-semiconductor-fault-detection/schema/schema_prediction.json
+============================================================
+2025-05-28 18:39:25,224 - INFO - Data validation completed successfully
+2025-05-28 18:39:25,224 - INFO - 
+============================================================
+2025-05-28 18:39:25,225 - INFO - All processes completed successfully!
+2025-05-28 18:39:25,225 - INFO - ============================================================

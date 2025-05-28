@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional
 from dotenv import load_dotenv
+from src.utils.path_utils import validate_env_path, ensure_path_exists
 
 # Add the src directory to Python path
 current_dir = Path(__file__).resolve().parent
@@ -16,22 +17,27 @@ sys.path.append(str(project_root))
 load_dotenv(project_root / '.env')
 
 def setup_logging() -> logging.Logger:
-    """Setup logging configuration with both file and console handlers"""
-    # Create logs directory if it doesn't exist
-    log_dir = project_root / "logs"
-    log_dir.mkdir(exist_ok=True)
+    """Setup logging configuration with only file handler (no console output)"""
+    from dotenv import load_dotenv
+    load_dotenv(project_root / '.env')
 
-    # Create a log file with timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_file = log_dir / f"main_process_{timestamp}.log"
+    BASE_DIR = project_root
+    LOGS_DIR = os.getenv("MAIN_LOGS_DIR")
+    LOG_FILE = os.getenv("MAIN_LOG_FILE")
 
-    # Configure logging
+    if not LOGS_DIR or not LOG_FILE:
+        raise RuntimeError("MAIN_LOGS_DIR and MAIN_LOG_FILE must be set in .env")
+
+    logs_dir = validate_env_path(LOGS_DIR, BASE_DIR)
+    log_file = validate_env_path(LOG_FILE, logs_dir)
+    ensure_path_exists(logs_dir)
+    ensure_path_exists(log_file, is_file=True)
+
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler(log_file),
-            logging.StreamHandler(sys.stdout)
+            logging.FileHandler(log_file)
         ]
     )
     return logging.getLogger(__name__)
@@ -61,11 +67,14 @@ def load_config() -> Dict[str, str]:
         config[var] = value
 
     if missing_vars:
-        raise EnvironmentError(
+        msg = (
             f"Missing required environment variables: {', '.join(missing_vars)}\n"
             f"Please ensure all required variables are set in the .env file."
         )
+        logging.error(msg, exc_info=True)
+        sys.exit(1)
 
+    # Do NOT log config or environment variables to avoid leaking sensitive info
     return config
 
 def parse_args() -> argparse.Namespace:
@@ -113,7 +122,7 @@ def run_schema_creation(config: Dict[str, str], mode: str) -> bool:
         logger.info("Schema creation completed successfully")
         return True
     except Exception as e:
-        logger.error(f"Error in schema creation: {str(e)}")
+        logger.error(f"Error in schema creation: {e}", exc_info=True)
         return False
 
 def run_data_validation(config: Dict[str, str], mode: str) -> bool:
@@ -139,16 +148,13 @@ def run_data_validation(config: Dict[str, str], mode: str) -> bool:
         logger.info("Data validation completed successfully")
         return True
     except Exception as e:
-        logger.error(f"Error in data validation: {str(e)}")
+        logger.error(f"Error in data validation: {e}", exc_info=True)
         return False
 
 def main():
     """Main function to orchestrate the entire process"""
     try:
-        # Parse command line arguments
         args = parse_args()
-
-        # Load configuration
         config = load_config()
 
         logger.info("="*60)
@@ -161,7 +167,7 @@ def main():
             logger.info("\nStep 1: Creating JSON Schema")
             if not run_schema_creation(config, args.mode):
                 logger.error("Schema creation failed. Stopping process.")
-                return
+                sys.exit(1)
         else:
             logger.info("\nStep 1: Schema creation skipped (--skip-schema flag used)")
 
@@ -170,7 +176,7 @@ def main():
             logger.info("\nStep 2: Running Data Validation")
             if not run_data_validation(config, args.mode):
                 logger.error("Data validation failed.")
-                return
+                sys.exit(1)
         else:
             logger.info("\nStep 2: Data validation skipped (--skip-validation flag used)")
 
@@ -179,7 +185,7 @@ def main():
         logger.info("="*60)
 
     except Exception as e:
-        logger.error(f"Critical error in main process: {str(e)}")
+        logger.error(f"Critical error in main process: {e}", exc_info=True)
         sys.exit(1)
 
 if __name__ == "__main__":
@@ -192,5 +198,5 @@ if __name__ == "__main__":
         logger.info("\nProcess interrupted by user")
         sys.exit(0)
     except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
+        logger.error(f"Unexpected error: {e}", exc_info=True)
         sys.exit(1)
