@@ -1,5 +1,5 @@
 Error: Last column should be 'Output' or 'Good/Bad', got 'Sensor-590'
-Timestamp: 2025-05-28 22:47:39.346529
+Timestamp: 2025-05-28 23:26:26.088903
 Filename Pattern: ^wafer_\d{8}_\d{6}\.csv$
 Mode: training
 Actual Columns: 591

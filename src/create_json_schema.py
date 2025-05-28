@@ -2,15 +2,15 @@ import os
 import json
 import logging
 from pathlib import Path
-from typing import Optional, Dict, List
+from typing import Optional
 from dotenv import load_dotenv
 from src.utils.path_utils import validate_env_path, ensure_path_exists
 
 # --- Load environment variables ---
 load_dotenv()
-BASE_DIR = Path(os.getenv("BASE_DIR"))
-SCHEMA_LOGS_DIR = os.getenv("SCHEMA_LOGS_DIR")
-SCHEMA_LOG_FILE = os.getenv("SCHEMA_LOG_FILE")
+BASE_DIR: Path = Path(os.getenv("BASE_DIR"))
+SCHEMA_LOGS_DIR: Optional[str] = os.getenv("SCHEMA_LOGS_DIR")
+SCHEMA_LOG_FILE: Optional[str] = os.getenv("SCHEMA_LOG_FILE")
 if not BASE_DIR or not SCHEMA_LOGS_DIR or not SCHEMA_LOG_FILE:
     raise RuntimeError("BASE_DIR, SCHEMA_LOGS_DIR, and SCHEMA_LOG_FILE must be set in .env")
 
@@ -19,22 +19,19 @@ SCHEMA_LOG_FILE = validate_env_path(SCHEMA_LOG_FILE, SCHEMA_LOGS_DIR)
 ensure_path_exists(SCHEMA_LOGS_DIR)
 ensure_path_exists(SCHEMA_LOG_FILE, is_file=True)
 
-logging.basicConfig(
-    filename=SCHEMA_LOG_FILE,
-    level=logging.INFO,
-    format='%(asctime)s %(levelname)s %(message)s'
-)
+# Setup logger (avoid duplicate handlers)
 logger = logging.getLogger(__name__)
+if not logger.hasHandlers():
+    logging.basicConfig(
+        filename=SCHEMA_LOG_FILE,
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s %(message)s'
+    )
 
 class SchemaCreator:
     """Creates JSON schemas for training and prediction data."""
 
     def __init__(self, schema_dir: Path, logger: logging.Logger):
-        """
-        Args:
-            schema_dir (Path): Directory where schema files will be saved.
-            logger (logging.Logger): Logger instance for logging.
-        """
         self.schema_dir = validate_env_path(str(schema_dir), BASE_DIR)
         ensure_path_exists(self.schema_dir)
         self.logger = logger
@@ -47,13 +44,6 @@ class SchemaCreator:
     ) -> Optional[Path]:
         """
         Generate and save a schema JSON file.
-
-        Args:
-            filename (str): Name of the schema file to create.
-            num_columns (int): Number of sensor columns (including wafer).
-            include_output (bool): Whether to include the Output column.
-        Returns:
-            Path to the created schema file, or None if failed.
         """
         try:
             output_path = self.schema_dir / filename
@@ -73,7 +63,7 @@ class SchemaCreator:
             with open(output_path, 'w') as file:
                 json.dump(schema, file, indent=4)
             self.logger.info(f"Schema created at: {output_path}")
-            self.logger.debug(f"Schema content: {json.dumps(schema)[:500]}")  # Log first 500 chars
+            self.logger.debug(f"Schema content: {json.dumps(schema)[:500]}")
             return output_path
         except Exception as e:
             self.logger.error(f"Failed to create schema {filename}: {e}", exc_info=True)
