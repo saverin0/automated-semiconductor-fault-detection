@@ -2,9 +2,8 @@ import os
 import sys
 import logging
 import argparse
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional, List
+from typing import Dict
 from dotenv import load_dotenv
 from src.utils.path_utils import validate_env_path, ensure_path_exists
 from src import create_json_schema
@@ -17,12 +16,10 @@ project_root = current_dir.parent
 # Load environment variables from .env file
 load_dotenv(project_root / '.env')
 
+BASE_DIR = project_root
+
 def setup_logging() -> logging.Logger:
     """Setup logging configuration with only file handler (no console output)"""
-    from dotenv import load_dotenv
-    load_dotenv(project_root / '.env')
-
-    BASE_DIR = project_root
     LOGS_DIR = os.getenv("MAIN_LOGS_DIR")
     LOG_FILE = os.getenv("MAIN_LOG_FILE")
 
@@ -75,7 +72,6 @@ def load_config() -> Dict[str, str]:
         logging.error(msg, exc_info=True)
         sys.exit(1)
 
-    # Do NOT log config or environment variables to avoid leaking sensitive info
     return config
 
 def parse_args() -> argparse.Namespace:
@@ -113,8 +109,11 @@ def run_schema_creation(config: Dict[str, str], mode: str) -> bool:
     logger.info("="*60)
 
     try:
+        schema_dir_env = os.getenv("SCHEMA_DIR", "schema")
+        schema_dir = validate_env_path(schema_dir_env, BASE_DIR)
+        ensure_path_exists(schema_dir)
         schema_creator = create_json_schema.SchemaCreator(
-            schema_dir=Path(os.getenv("SCHEMA_DIR", "schema")),
+            schema_dir=schema_dir,
             logger=logger
         )
         schema_creator.generate_schema_training()

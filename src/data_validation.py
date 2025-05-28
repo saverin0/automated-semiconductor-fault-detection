@@ -34,39 +34,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def is_safe_path(base_dir: Path, target_path: Path) -> bool:
-    """Ensure target_path is within base_dir and does not contain suspicious elements."""
-    try:
-        # Resolve both paths to absolute
-        base_dir = base_dir.resolve()
-        target_path = target_path.resolve()
-        # Check that target_path is a subpath of base_dir
-        return str(target_path).startswith(str(base_dir))
-    except Exception:
-        return False
-
-def validate_env_path(var_value: str, base_dir: Path) -> Path:
-    """Validate and return a safe Path object for environment paths."""
-    path = Path(var_value)
-    if path.is_absolute() and not str(path).startswith(str(base_dir)):
-        raise ValueError(f"Unsafe absolute path detected: {path}")
-    # Prevent '..' in any part of the path
-    if any(part == '..' for part in path.parts):
-        raise ValueError(f"Unsafe path traversal detected: {path}")
-    # Make path absolute relative to base_dir if not already
-    abs_path = (base_dir / path).resolve() if not path.is_absolute() else path.resolve()
-    if not is_safe_path(base_dir, abs_path):
-        raise ValueError(f"Path {abs_path} is outside of allowed base directory {base_dir}")
-    return abs_path
-
-def ensure_path_exists(path: Path, is_file: bool = False):
-    """Ensure a directory or file exists. Create if missing."""
-    if is_file:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.touch(exist_ok=True)
-    else:
-        path.mkdir(parents=True, exist_ok=True)
-
 # --- Configuration dataclass ---
 @dataclass
 class ValidatorConfig:
@@ -139,7 +106,7 @@ try:
 except (KeyError, ValueError) as e:
     msg = f"Error: Invalid or missing environment variable: {e}. Please check your .env file."
     logging.error(msg, exc_info=True)
-    raise RuntimeError("Your error message")
+    raise RuntimeError(str(e))
 
 def get_logger(log_file: str, mode: str) -> logging.Logger:
     """Get a logger with a specific file handler for each mode"""
@@ -178,7 +145,7 @@ class FileValidator:
             self._init_schema()
         except Exception as e:
             self.logger.error(f"Failed to initialize validator: {e}", exc_info=True)
-            raise RuntimeError("Your error message")
+            raise RuntimeError(str(e))
 
     def _init_schema(self) -> None:
         try:
@@ -188,7 +155,7 @@ class FileValidator:
             self.logger.info(f"Last column: {self.expected_column_names[-1]}")
         except Exception as e:
             self.logger.error(f"Failed to initialize schema: {e}", exc_info=True)
-            raise RuntimeError("Your error message")
+            raise RuntimeError(str(e))
 
     @staticmethod
     @lru_cache(maxsize=8)
@@ -215,7 +182,7 @@ class FileValidator:
     def setup_directories(self) -> None:
         if not self.input_dir.exists():
             self.logger.error(f"Input directory does not exist: {self.input_dir}")
-            raise RuntimeError("Your error message")
+            raise RuntimeError(f"Input directory does not exist: {self.input_dir}")
         else:
             self.logger.info(f"Input directory exists: {self.input_dir}")
 
@@ -228,7 +195,7 @@ class FileValidator:
                 self.logger.info(f"Created directory: {path}")
             except Exception as e:
                 self.logger.error(f"Failed to create directory {path}: {e}", exc_info=True)
-                raise RuntimeError("Your error message")
+                raise RuntimeError(str(e))
 
         ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.logger.info("="*60)
@@ -387,11 +354,11 @@ class FileValidator:
         try:
             if not self.input_dir.exists():
                 self.logger.error(f"Input directory does not exist: {self.input_dir}")
-                raise RuntimeError("Your error message")
+                raise RuntimeError(f"Input directory does not exist: {self.input_dir}")
             entries = [e for e in os.scandir(self.input_dir) if e.is_file() and e.name.endswith(CSV_EXTENSION)]
         except Exception as e:
             self.logger.error(f"Failed to scan input directory: {e}", exc_info=True)
-            raise RuntimeError("Your error message")
+            raise RuntimeError(str(e))
 
         if not entries:
             self.logger.warning(f"No CSV files found in {self.input_dir}")
@@ -439,7 +406,7 @@ def main():
         training_validator.summary()
     except Exception as e:
         logging.error(f"Training validation failed: {e}", exc_info=True)
-        raise RuntimeError("Your error message")
+        raise RuntimeError(str(e))
 
     try:
         logging.info("Step 2: Running Prediction Validation...")
@@ -449,7 +416,7 @@ def main():
         prediction_validator.summary()
     except Exception as e:
         logging.error(f"Prediction validation failed: {e}", exc_info=True)
-        raise RuntimeError("Your error message")
+        raise RuntimeError(str(e))
 
     logging.info("Validation process complete!")
 
