@@ -1,8 +1,7 @@
 Error: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
-Timestamp: 2025-05-13 02:04:39.391356
+Timestamp: 2025-05-28 22:47:39.392359
 Filename Pattern: ^wafer_\d{8}_\d{6}\.csv$
 Mode: training
-Schema File: /workspaces/automated-semiconductor-fault-detection/schema/schema_training.json
 Actual Columns: 591
 First 5 columns: , Sensor-1, Sensor-2, Sensor-3, Sensor-4
 Last 5 columns: Sensor-586, Sensor-587, Sensor-588, Sensor-589, Sensor-590
