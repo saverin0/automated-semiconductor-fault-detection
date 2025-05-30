@@ -1,5 +1,5 @@
 Error: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
-Timestamp: 2025-05-28 23:26:26.521414
+Timestamp: 2025-05-30 11:55:21.732817
 Filename Pattern: ^wafer_\d{8}_\d{6}\.csv$
 Mode: prediction
 Actual Columns: 591
