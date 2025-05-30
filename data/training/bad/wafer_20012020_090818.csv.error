@@ -1,0 +1,3 @@
+Error: Row 6: Column 'Sensor-16' expects float, got 'abc'
+Timestamp: 2025-05-30 23:22:19.974372
+Mode: training

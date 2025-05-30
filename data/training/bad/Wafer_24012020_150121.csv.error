@@ -1,7 +1,3 @@
-Error: Invalid filename format. Expected pattern: ^wafer_\d{8}_\d{6}\.csv$
-Timestamp: 2025-05-30 13:33:31.482794
-Filename Pattern: ^wafer_\d{8}_\d{6}\.csv$
+Error: Invalid filename format
+Timestamp: 2025-05-30 23:22:19.844451
 Mode: training
-Actual Columns: 591
-First 5 columns: , Sensor-1, Sensor-2, Sensor-3, Sensor-4
-Last 5 columns: , , , , 

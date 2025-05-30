@@ -59,12 +59,7 @@ def load_config() -> Dict[str, str]:
         'TRAINING_GOOD_DIR',
         'TRAINING_BAD_DIR',
         'TRAINING_SCHEMA_FILE',
-        'TRAINING_LOG_FILE',
-        'PREDICTION_INPUT_DIR',
-        'PREDICTION_GOOD_DIR',
-        'PREDICTION_BAD_DIR',
-        'PREDICTION_SCHEMA_FILE',
-        'PREDICTION_LOG_FILE'
+        'TRAINING_LOG_FILE'
     ]
 
     config = {}
@@ -89,7 +84,7 @@ def load_config() -> Dict[str, str]:
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
-        description='Run schema creation and data validation for wafer data',
+        description='Run schema creation and data validation for wafer data (training only)',
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
@@ -105,16 +100,9 @@ def parse_args() -> argparse.Namespace:
         help='Skip data validation step'
     )
 
-    parser.add_argument(
-        '--mode',
-        choices=['training', 'prediction', 'both'],
-        default='both',
-        help='Specify the validation mode (default: both)'
-    )
-
     return parser.parse_args()
 
-def run_schema_creation(config: Dict[str, str], mode: str) -> bool:
+def run_schema_creation(config: Dict[str, str]) -> bool:
     """Run the schema creation process"""
     main_logger.info("="*60)
     main_logger.info("Starting schema creation process...")
@@ -132,33 +120,29 @@ def run_schema_creation(config: Dict[str, str], mode: str) -> bool:
             schema_dir=schema_dir,
             logger=schema_logger
         )
-        schema_creator.generate_schema_training()
-        schema_creator.generate_schema_prediction()
+        schema_creator.generate_schema_training(
+            filename=os.getenv("TRAINING_SCHEMA_FILENAME"),
+            num_columns=int(os.getenv("TRAINING_NUM_COLUMNS"))
+        )
         main_logger.info("Schema creation completed successfully")
         return True
     except Exception as e:
         main_logger.error(f"Error in schema creation: {e}", exc_info=True)
         return False
 
-def run_data_validation(config: Dict[str, str], mode: str) -> bool:
-    """Run the data validation process"""
+def run_data_validation(config: Dict[str, str]) -> bool:
+    """Run the data validation process (training only)"""
     main_logger.info("="*60)
     main_logger.info("Starting data validation process...")
     main_logger.info("="*60)
 
     try:
-        if mode in ['training', 'both']:
-            training_validator = data_validation.FileValidator(data_validation.TRAINING_CONFIG)
-            training_validator.setup_directories()
-            training_validator.validate_files_parallel()
-            training_validator.summary()
-
-        if mode in ['prediction', 'both']:
-            prediction_validator = data_validation.FileValidator(data_validation.PREDICTION_CONFIG)
-            prediction_validator.setup_directories()
-            prediction_validator.validate_files_parallel()
-            prediction_validator.summary()
-
+        # FIXED: Use setup_environment() instead of TRAINING_CONFIG
+        validator_config = data_validation.setup_environment()
+        training_validator = data_validation.FileValidator(validator_config)
+        training_validator.setup_directories()
+        training_validator.validate_files_parallel()
+        training_validator.summary()
         main_logger.info("Data validation completed successfully")
         return True
     except Exception as e:
@@ -166,20 +150,19 @@ def run_data_validation(config: Dict[str, str], mode: str) -> bool:
         return False
 
 def main():
-    """Main function to orchestrate the entire process"""
+    """Main function to orchestrate the entire process (training only)"""
     try:
         args = parse_args()
         config = load_config()
 
         main_logger.info("="*60)
-        main_logger.info("Starting Wafer Data Processing Pipeline")
-        main_logger.info(f"Mode: {args.mode}")
+        main_logger.info("Starting Wafer Data Processing Pipeline (training only)")
         main_logger.info("="*60)
 
         # Step 1: Schema Creation (if not skipped)
         if not args.skip_schema:
             main_logger.info("\nStep 1: Creating JSON Schema")
-            if not run_schema_creation(config, args.mode):
+            if not run_schema_creation(config):
                 main_logger.error("Schema creation failed. Stopping process.")
                 sys.exit(1)
         else:
@@ -188,7 +171,7 @@ def main():
         # Step 2: Data Validation (if not skipped)
         if not args.skip_validation:
             main_logger.info("\nStep 2: Running Data Validation")
-            if not run_data_validation(config, args.mode):
+            if not run_data_validation(config):
                 main_logger.error("Data validation failed.")
                 sys.exit(1)
         else:
@@ -198,9 +181,6 @@ def main():
         sys.exit(0)
     except Exception as e:
         main_logger.error(f"Unexpected error: {e}", exc_info=True)
-        sys.exit(1)
-    except Exception as e:
-        main_logger.error(f"Critical error in main process: {e}", exc_info=True)
         sys.exit(1)
 
 if __name__ == "__main__":
