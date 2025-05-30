@@ -19,6 +19,17 @@ SCHEMA_LOG_FILE = validate_env_path(SCHEMA_LOG_FILE, SCHEMA_LOGS_DIR)
 ensure_path_exists(SCHEMA_LOGS_DIR)
 ensure_path_exists(SCHEMA_LOG_FILE, is_file=True)
 
+def get_schema_logger(log_file: str) -> logging.Logger:
+    logger = logging.getLogger("schema_creation")
+    logger.setLevel(logging.INFO)
+    # Remove any existing handlers
+    logger.handlers.clear()
+    handler = logging.FileHandler(log_file)
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    return logger
+
 # Setup logger (avoid duplicate handlers)
 logger = logging.getLogger(__name__)
 if not logger.hasHandlers():
