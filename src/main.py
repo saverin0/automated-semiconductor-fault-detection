@@ -18,8 +18,8 @@ load_dotenv(project_root / '.env')
 
 BASE_DIR = project_root
 
-def setup_logging() -> logging.Logger:
-    """Setup logging configuration with only file handler (no console output)"""
+def setup_main_logger() -> logging.Logger:
+    """Setup a dedicated logger for the main process."""
     LOGS_DIR = os.getenv("MAIN_LOGS_DIR")
     LOG_FILE = os.getenv("MAIN_LOG_FILE")
 
@@ -31,14 +31,26 @@ def setup_logging() -> logging.Logger:
     ensure_path_exists(logs_dir)
     ensure_path_exists(log_file, is_file=True)
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(log_file)
-        ]
-    )
-    return logging.getLogger(__name__)
+    logger = logging.getLogger("main_process")
+    logger.setLevel(logging.INFO)
+    # Remove any existing handlers to avoid duplicate logs
+    logger.handlers.clear()
+    handler = logging.FileHandler(log_file)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    return logger
+
+def get_schema_logger(log_file: str) -> logging.Logger:
+    """Setup a dedicated logger for the schema creation process."""
+    logger = logging.getLogger("schema_creation")
+    logger.setLevel(logging.INFO)
+    logger.handlers.clear()
+    handler = logging.FileHandler(log_file)
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    return logger
 
 def load_config() -> Dict[str, str]:
     """Load configuration from environment variables"""
@@ -69,7 +81,7 @@ def load_config() -> Dict[str, str]:
             f"Missing required environment variables: {', '.join(missing_vars)}\n"
             f"Please ensure all required variables are set in the .env file."
         )
-        logging.error(msg, exc_info=True)
+        main_logger.error(msg, exc_info=True)
         sys.exit(1)
 
     return config
@@ -104,31 +116,35 @@ def parse_args() -> argparse.Namespace:
 
 def run_schema_creation(config: Dict[str, str], mode: str) -> bool:
     """Run the schema creation process"""
-    logger.info("="*60)
-    logger.info("Starting schema creation process...")
-    logger.info("="*60)
+    main_logger.info("="*60)
+    main_logger.info("Starting schema creation process...")
+    main_logger.info("="*60)
 
     try:
         schema_dir_env = os.getenv("SCHEMA_DIR", "schema")
         schema_dir = validate_env_path(schema_dir_env, BASE_DIR)
         ensure_path_exists(schema_dir)
+        schema_log_file = os.getenv("SCHEMA_LOG_FILE", "logs/schema_creation.log")
+        schema_log_file = validate_env_path(schema_log_file, BASE_DIR)
+        ensure_path_exists(schema_log_file, is_file=True)
+        schema_logger = get_schema_logger(str(schema_log_file))
         schema_creator = create_json_schema.SchemaCreator(
             schema_dir=schema_dir,
-            logger=logger
+            logger=schema_logger
         )
         schema_creator.generate_schema_training()
         schema_creator.generate_schema_prediction()
-        logger.info("Schema creation completed successfully")
+        main_logger.info("Schema creation completed successfully")
         return True
     except Exception as e:
-        logger.error(f"Error in schema creation: {e}", exc_info=True)
+        main_logger.error(f"Error in schema creation: {e}", exc_info=True)
         return False
 
 def run_data_validation(config: Dict[str, str], mode: str) -> bool:
     """Run the data validation process"""
-    logger.info("="*60)
-    logger.info("Starting data validation process...")
-    logger.info("="*60)
+    main_logger.info("="*60)
+    main_logger.info("Starting data validation process...")
+    main_logger.info("="*60)
 
     try:
         if mode in ['training', 'both']:
@@ -143,10 +159,10 @@ def run_data_validation(config: Dict[str, str], mode: str) -> bool:
             prediction_validator.validate_files_parallel()
             prediction_validator.summary()
 
-        logger.info("Data validation completed successfully")
+        main_logger.info("Data validation completed successfully")
         return True
     except Exception as e:
-        logger.error(f"Error in data validation: {e}", exc_info=True)
+        main_logger.error(f"Error in data validation: {e}", exc_info=True)
         return False
 
 def main():
@@ -155,46 +171,47 @@ def main():
         args = parse_args()
         config = load_config()
 
-        logger.info("="*60)
-        logger.info("Starting Wafer Data Processing Pipeline")
-        logger.info(f"Mode: {args.mode}")
-        logger.info("="*60)
+        main_logger.info("="*60)
+        main_logger.info("Starting Wafer Data Processing Pipeline")
+        main_logger.info(f"Mode: {args.mode}")
+        main_logger.info("="*60)
 
         # Step 1: Schema Creation (if not skipped)
         if not args.skip_schema:
-            logger.info("\nStep 1: Creating JSON Schema")
+            main_logger.info("\nStep 1: Creating JSON Schema")
             if not run_schema_creation(config, args.mode):
-                logger.error("Schema creation failed. Stopping process.")
+                main_logger.error("Schema creation failed. Stopping process.")
                 sys.exit(1)
         else:
-            logger.info("\nStep 1: Schema creation skipped (--skip-schema flag used)")
+            main_logger.info("\nStep 1: Schema creation skipped (--skip-schema flag used)")
 
         # Step 2: Data Validation (if not skipped)
         if not args.skip_validation:
-            logger.info("\nStep 2: Running Data Validation")
+            main_logger.info("\nStep 2: Running Data Validation")
             if not run_data_validation(config, args.mode):
-                logger.error("Data validation failed.")
+                main_logger.error("Data validation failed.")
                 sys.exit(1)
         else:
-            logger.info("\nStep 2: Data validation skipped (--skip-validation flag used)")
-
-        logger.info("\n" + "="*60)
-        logger.info("All processes completed successfully!")
-        logger.info("="*60)
-
+            main_logger.info("\nStep 2: Data validation skipped (--skip-validation flag used)")
+    except KeyboardInterrupt:
+        main_logger.info("\nProcess interrupted by user")
+        sys.exit(0)
     except Exception as e:
-        logger.error(f"Critical error in main process: {e}", exc_info=True)
+        main_logger.error(f"Unexpected error: {e}", exc_info=True)
+        sys.exit(1)
+    except Exception as e:
+        main_logger.error(f"Critical error in main process: {e}", exc_info=True)
         sys.exit(1)
 
 if __name__ == "__main__":
-    # Setup logging
-    logger = setup_logging()
+    # Setup main process logger
+    main_logger = setup_main_logger()
 
     try:
         main()
     except KeyboardInterrupt:
-        logger.info("\nProcess interrupted by user")
+        main_logger.info("\nProcess interrupted by user")
         sys.exit(0)
     except Exception as e:
-        logger.error(f"Unexpected error: {e}", exc_info=True)
+        main_logger.error(f"Unexpected error: {e}", exc_info=True)
         sys.exit(1)
