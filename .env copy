@@ -1,0 +1,25 @@
+# Training Configuration
+TRAINING_INPUT_DIR=/workspaces/automated-semiconductor-fault-detection/data/training/input
+TRAINING_GOOD_DIR=/workspaces/automated-semiconductor-fault-detection/data/training/good
+TRAINING_BAD_DIR=/workspaces/automated-semiconductor-fault-detection/data/training/bad
+TRAINING_SCHEMA_FILE=/workspaces/automated-semiconductor-fault-detection/schema/schema_training.json
+TRAINING_LOG_FILE=/workspaces/automated-semiconductor-fault-detection/logs/training.log
+TRAINING_SCHEMA_FILENAME=schema_training.json
+TRAINING_NUM_COLUMNS=592
+
+# Prediction Configuration
+MAIN_LOGS_DIR=/workspaces/automated-semiconductor-fault-detection/logs
+MAIN_LOG_FILE=/workspaces/automated-semiconductor-fault-detection/logs/main_process.log
+FALLBACK_LOGS_DIR=/workspaces/automated-semiconductor-fault-detection/logs
+FALLBACK_LOG_FILE=/workspaces/automated-semiconductor-fault-detection/logs/validation_fallback.log
+CSV_EXTENSION=.csv
+BASE_DIR=/workspaces/automated-semiconductor-fault-detection
+SCHEMA_DIR=/workspaces/automated-semiconductor-fault-detection/schema
+SCHEMA_LOGS_DIR=/workspaces/automated-semiconductor-fault-detection/logs
+SCHEMA_LOG_FILE=/workspaces/automated-semiconductor-fault-detection/logs/schema_creation.log
+GOOD_DIR=/workspaces/automated-semiconductor-fault-detection/data/training/good
+BQ_PROJECT=machine-learning-461308
+BQ_DATASET=wafer_dataset
+BQ_TABLE=wafer_training_data
+BQ_LOCATION=US
+BQ_SCHEMA_JSON=/workspaces/automated-semiconductor-fault-detection/schema/training_schema.json
