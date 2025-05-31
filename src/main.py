@@ -8,11 +8,14 @@ from dotenv import load_dotenv
 from src.utils.path_utils import validate_env_path, ensure_path_exists
 from src import create_json_schema
 from src import data_validation
-from .training_good_csv_to_db import (
+from .data_ingestion.training_good_csv_to_db import (
     upload_good_csvs_to_bigquery,
     export_bigquery_table_to_csv,
     load_bq_schema_from_json
 )
+from .data_preprocessing.preprocessing import train_models
+import joblib
+from src.best_model_finder.tuner import Model_Finder
 
 # Add the src directory to Python path
 current_dir = Path(__file__).resolve().parent
@@ -201,6 +204,8 @@ def run_database_upload_and_export() -> bool:
         db_logger.error(f"Database upload/export failed: {e}", exc_info=True)
         return False
 
+
+
 def main():
     """Main function to orchestrate the entire process (training only)"""
     try:
@@ -234,6 +239,16 @@ def main():
         if not run_database_upload_and_export():
             main_logger.error("Database upload/export failed.")
             sys.exit(1)
+
+        # Step 4: Preprocessing and Model Training
+        main_logger.info("\nStep 4: Preprocessing exported data and training models")
+        try:
+            train_models("exported_data.csv", main_logger)
+            main_logger.info("Preprocessing and model training completed successfully.")
+        except Exception as e:
+            main_logger.error(f"Preprocessing/model training failed: {e}", exc_info=True)
+            sys.exit(1)
+
     except KeyboardInterrupt:
         main_logger.info("\nProcess interrupted by user")
         sys.exit(0)
