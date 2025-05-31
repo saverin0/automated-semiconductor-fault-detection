@@ -8,6 +8,11 @@ from dotenv import load_dotenv
 from src.utils.path_utils import validate_env_path, ensure_path_exists
 from src import create_json_schema
 from src import data_validation
+from .training_good_csv_to_db import (
+    upload_good_csvs_to_bigquery,
+    export_bigquery_table_to_csv,
+    load_bq_schema_from_json
+)
 
 # Add the src directory to Python path
 current_dir = Path(__file__).resolve().parent
@@ -44,6 +49,17 @@ def setup_main_logger() -> logging.Logger:
 def get_schema_logger(log_file: str) -> logging.Logger:
     """Setup a dedicated logger for the schema creation process."""
     logger = logging.getLogger("schema_creation")
+    logger.setLevel(logging.INFO)
+    logger.handlers.clear()
+    handler = logging.FileHandler(log_file)
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    return logger
+
+def get_db_logger(log_file: str) -> logging.Logger:
+    """Setup a dedicated logger for the database process."""
+    logger = logging.getLogger("db_process")
     logger.setLevel(logging.INFO)
     logger.handlers.clear()
     handler = logging.FileHandler(log_file)
@@ -149,6 +165,42 @@ def run_data_validation(config: Dict[str, str]) -> bool:
         main_logger.error(f"Error in data validation: {e}", exc_info=True)
         return False
 
+def run_database_upload_and_export() -> bool:
+    """Upload good CSVs to BigQuery and export the table to CSV, with DB logging."""
+    db_log_file = os.getenv("DB_LOG_FILE", "logs/db_process.log")
+    db_log_file = validate_env_path(db_log_file, BASE_DIR)
+    ensure_path_exists(db_log_file, is_file=True)
+    db_logger = get_db_logger(str(db_log_file))
+
+    try:
+        good_dir = os.getenv("GOOD_DIR")
+        project_id = os.getenv("BQ_PROJECT")
+        dataset_id = os.getenv("BQ_DATASET")
+        table_id = os.getenv("BQ_TABLE")
+        location = os.getenv("BQ_LOCATION", "US")
+        schema_json_path = os.getenv("BQ_SCHEMA_JSON")
+
+        if not all([good_dir, project_id, dataset_id, table_id, schema_json_path]):
+            db_logger.error("Missing one or more required BigQuery environment variables.")
+            return False
+
+        schema, cleaned_col_map = load_bq_schema_from_json(schema_json_path)
+
+        db_logger.info("Uploading good CSVs to BigQuery...")
+        upload_good_csvs_to_bigquery(
+            good_dir, project_id, dataset_id, table_id, schema, cleaned_col_map, location, db_logger=db_logger
+        )
+
+        db_logger.info("Exporting BigQuery table to CSV...")
+        export_bigquery_table_to_csv(
+            project_id, dataset_id, table_id, "exported_data.csv", location, db_logger=db_logger
+        )
+        db_logger.info("Database upload and export completed successfully.")
+        return True
+    except Exception as e:
+        db_logger.error(f"Database upload/export failed: {e}", exc_info=True)
+        return False
+
 def main():
     """Main function to orchestrate the entire process (training only)"""
     try:
@@ -176,6 +228,12 @@ def main():
                 sys.exit(1)
         else:
             main_logger.info("\nStep 2: Data validation skipped (--skip-validation flag used)")
+
+        # Step 3: Database Upload and Export
+        main_logger.info("\nStep 3: Uploading to BigQuery and exporting table")
+        if not run_database_upload_and_export():
+            main_logger.error("Database upload/export failed.")
+            sys.exit(1)
     except KeyboardInterrupt:
         main_logger.info("\nProcess interrupted by user")
         sys.exit(0)
