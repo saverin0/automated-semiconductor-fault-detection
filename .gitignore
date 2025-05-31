@@ -1,0 +1,58 @@
+# .gitignore
+
+# Python
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+# Google Cloud credentials
+*.json
+
+# VSCode settings (optional)
+.vscode/
+
+# Logs (optional)
+logs/
+*.log
+
+# Data folders (optional, if you don't want to track data)
+data/
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+# Temporary files
+*.tmp
+# Backup files
+*.bak
+# MacOS specific
+.DS_Store
+# Windows specific
+Thumbs.db
+# IDE specific
+.idea/
+# Python virtual environment
+venv/
+# Jupyter Notebook specific
+.ipynb_checkpoints/
+
+# Coverage reports
+.coverage
+# Pytest cache
+.pytest_cache/
+# PyCharm specific
+.idea/
+# Local configuration files
+*.local
+# Build directories
+build/
+# Distribution directories
+
+dist/
+# Cython debug symbols
+cython_debug/
+# PyInstaller
+# PyInstaller specific
+# PyInstaller creates a build folder and a dist folder
+# which are not needed in version control
+# PyInstaller specific
