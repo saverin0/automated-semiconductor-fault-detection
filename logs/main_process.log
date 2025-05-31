@@ -132,3 +132,37 @@ Step 2: Running Data Validation
 2025-05-31 18:23:28,148 - INFO - Data validation completed successfully
 2025-05-31 18:23:28,148 - INFO - 
 Step 3: Uploading to BigQuery and exporting table
+2025-05-31 19:45:46,804 - INFO - ============================================================
+2025-05-31 19:45:46,822 - INFO - Starting Wafer Data Processing Pipeline (training only)
+2025-05-31 19:45:46,822 - INFO - ============================================================
+2025-05-31 19:45:46,822 - INFO - 
+Step 1: Creating JSON Schema
+2025-05-31 19:45:46,822 - INFO - ============================================================
+2025-05-31 19:45:46,822 - INFO - Starting schema creation process...
+2025-05-31 19:45:46,822 - INFO - ============================================================
+2025-05-31 19:45:46,828 - INFO - Schema creation completed successfully
+2025-05-31 19:45:46,828 - INFO - 
+Step 2: Running Data Validation
+2025-05-31 19:45:46,828 - INFO - ============================================================
+2025-05-31 19:45:46,828 - INFO - Starting data validation process...
+2025-05-31 19:45:46,828 - INFO - ============================================================
+2025-05-31 19:45:47,924 - INFO - Data validation completed successfully
+2025-05-31 19:45:47,924 - INFO - 
+Step 3: Uploading to BigQuery and exporting table
+2025-05-31 23:13:04,504 - INFO - ============================================================
+2025-05-31 23:13:04,514 - INFO - Starting Wafer Data Processing Pipeline (training only)
+2025-05-31 23:13:04,514 - INFO - ============================================================
+2025-05-31 23:13:04,514 - INFO - 
+Step 1: Creating JSON Schema
+2025-05-31 23:13:04,514 - INFO - ============================================================
+2025-05-31 23:13:04,514 - INFO - Starting schema creation process...
+2025-05-31 23:13:04,514 - INFO - ============================================================
+2025-05-31 23:13:04,519 - INFO - Schema creation completed successfully
+2025-05-31 23:13:04,519 - INFO - 
+Step 2: Running Data Validation
+2025-05-31 23:13:04,519 - INFO - ============================================================
+2025-05-31 23:13:04,519 - INFO - Starting data validation process...
+2025-05-31 23:13:04,520 - INFO - ============================================================
+2025-05-31 23:13:05,656 - INFO - Data validation completed successfully
+2025-05-31 23:13:05,656 - INFO - 
+Step 3: Uploading to BigQuery and exporting table
