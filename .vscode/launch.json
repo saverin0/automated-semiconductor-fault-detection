@@ -1,7 +1,0 @@
-{
-  "name": "Python: src.main",
-  "type": "python",
-  "request": "launch",
-  "module": "src.main",
-  "cwd": "${workspaceFolder}"
-}
