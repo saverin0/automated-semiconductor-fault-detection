@@ -19,6 +19,8 @@ logs/
 
 # Data folders (optional, if you don't want to track data)
 data/
+# Ignore trained model directory
+src/training_model/
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
 # Temporary files
