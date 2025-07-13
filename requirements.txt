@@ -19,6 +19,11 @@ scikit-learn>=1.0.0
 xgboost>=1.6.0
 joblib>=1.1.0
 
+# Web Framework (NEW)
+flask>=3.0.0
+flask-cors>=4.0.0
+gunicorn>=21.0.0
+
 # Logging (built-in, but listing for clarity)
 # logging - built into Python
 
@@ -28,3 +33,7 @@ joblib>=1.1.0
 
 # Standard library dependencies (built-in, no installation needed)
 # os, re, csv, shutil, datetime, hashlib, time, functools, dataclasses, typing
+# Web Framework
+flask>=3.0.0
+flask-cors>=4.0.0
+gunicorn>=21.0.0

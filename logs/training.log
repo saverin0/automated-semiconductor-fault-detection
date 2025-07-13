@@ -3449,3 +3449,206 @@ Note: Missing value handling will occur during preprocessing stage
 2025-07-13 14:01:17,695 INFO:   Wafer_19012020_141432.csv: Invalid filename format
 2025-07-13 14:01:17,695 INFO:   Wafer_18012020_121532.csv: Invalid filename format
 2025-07-13 14:01:17,695 INFO:   Wafer_12012020_111.csv: Invalid filename format
+2025-07-13 15:57:15,088 INFO: Validator initialized for mode: training
+2025-07-13 15:57:15,088 INFO: Reading schema file...
+2025-07-13 15:57:15,094 INFO: Schema loaded: 592 columns
+2025-07-13 15:57:15,094 INFO: Setting up directories for validation...
+2025-07-13 15:57:15,111 INFO: Removed existing directory: /workspaces/automated-semiconductor-fault-detection/data/training/good
+2025-07-13 15:57:15,114 INFO: Created directory: /workspaces/automated-semiconductor-fault-detection/data/training/good
+2025-07-13 15:57:15,117 INFO: Removed existing directory: /workspaces/automated-semiconductor-fault-detection/data/training/bad
+2025-07-13 15:57:15,118 INFO: Created directory: /workspaces/automated-semiconductor-fault-detection/data/training/bad
+2025-07-13 15:57:15,118 INFO: ============================================================
+2025-07-13 15:57:15,118 INFO: === TRAINING Validation started at 2025-07-13 15:57:15 ===
+2025-07-13 15:57:15,118 INFO: ============================================================
+2025-07-13 15:57:15,118 INFO: Scanning input directory /workspaces/automated-semiconductor-fault-detection/data/training/input for CSV files...
+2025-07-13 15:57:15,118 INFO: Found 43 CSV files to process
+2025-07-13 15:57:15,121 INFO: Processing file: Waferdefault_15010_130532.csv
+2025-07-13 15:57:15,121 INFO: Processing file: wafer_29012020_060756.csv
+2025-07-13 15:57:15,121 WARNING: Invalid filename format: Waferdefault_15010_130532.csv
+2025-07-13 15:57:15,122 INFO: Processing file: Wafer_11012020_151432.csv
+2025-07-13 15:57:15,122 WARNING: Invalid filename format: Wafer_11012020_151432.csv
+2025-07-13 15:57:15,122 INFO: Processing file: wafer_27012020_080912.csv
+2025-07-13 15:57:15,215 INFO: [BAD] Wafer_11012020_151432.csv: Invalid filename format
+2025-07-13 15:57:15,216 INFO: Processing file: Wafer_24012020_150121.csv
+2025-07-13 15:57:15,216 WARNING: Invalid filename format: Wafer_24012020_150121.csv
+2025-07-13 15:57:15,218 INFO: File SHA256: 32c908c1196125a8...
+2025-07-13 15:57:15,219 INFO: File SHA256: 74ecb99db989ca16...
+2025-07-13 15:57:15,220 INFO: Column validation passed using hash comparison.
+2025-07-13 15:57:15,220 WARNING: Columns do not match schema
+2025-07-13 15:57:15,220 INFO: [BAD] Waferdefault_15010_130532.csv: Invalid filename format
+2025-07-13 15:57:15,239 INFO: Processing file: wafer_23012020_041211.csv
+2025-07-13 15:57:15,238 WARNING: Column validation failed: Columns do not match schema
+2025-07-13 15:57:15,239 INFO: [BAD] wafer_27012020_080912.csv: Columns do not match schema
+2025-07-13 15:57:15,240 INFO: Processing file: wafer_17012020_125434.csv
+2025-07-13 15:57:15,240 INFO: [GOOD] wafer_29012020_060756_32c908c1.csv
+2025-07-13 15:57:15,241 INFO: Processing file: wafer_13012020_090817.csv
+2025-07-13 15:57:15,338 INFO: [BAD] Wafer_24012020_150121.csv: Invalid filename format
+2025-07-13 15:57:15,339 INFO: Processing file: Wafer_fault_detection.csv
+2025-07-13 15:57:15,340 WARNING: Invalid filename format: Wafer_fault_detection.csv
+2025-07-13 15:57:15,342 INFO: File SHA256: 1d78b5f96648b029...
+2025-07-13 15:57:15,342 INFO: Column validation passed using hash comparison.
+2025-07-13 15:57:15,360 INFO: [GOOD] wafer_23012020_041211_1d78b5f9.csv
+2025-07-13 15:57:15,361 INFO: Processing file: Wafer_22012020_173245.csv
+2025-07-13 15:57:15,361 WARNING: Invalid filename format: Wafer_22012020_173245.csv
+2025-07-13 15:57:15,525 INFO: File SHA256: c6bc8191caaf5ecb...
+2025-07-13 15:57:15,527 WARNING: Last column should be 'Output' or 'Good/Bad', got 'Sensor-590'
+2025-07-13 15:57:15,527 WARNING: Column validation failed: Last column should be 'Output' or 'Good/Bad', got 'Sensor-590'
+2025-07-13 15:57:15,528 INFO: [BAD] Wafer_22012020_173245.csv: Invalid filename format
+2025-07-13 15:57:15,529 INFO: [BAD] Wafer_fault_detection.csv: Invalid filename format
+2025-07-13 15:57:15,529 INFO: [BAD] wafer_17012020_125434.csv: Last column should be 'Output' or 'Good/Bad', got 'Sensor-590'
+2025-07-13 15:57:15,529 INFO: File SHA256: 685c90f461117301...
+2025-07-13 15:57:15,530 INFO: Column validation passed using hash comparison.
+2025-07-13 15:57:15,574 INFO: Processing file: Wafer_20012020_135132.csv
+2025-07-13 15:57:15,574 WARNING: Invalid filename format: Wafer_20012020_135132.csv
+2025-07-13 15:57:15,608 INFO: Processing file: Wafer_15012020_130532.csv
+2025-07-13 15:57:15,608 WARNING: Invalid filename format: Wafer_15012020_130532.csv
+2025-07-13 15:57:15,609 INFO: Processing file: wafer_20022020_090716.csv
+2025-07-13 15:57:15,610 INFO: [GOOD] wafer_13012020_090817_685c90f4.csv
+2025-07-13 15:57:15,611 INFO: Processing file: Wafer_25012020_142112.csv
+2025-07-13 15:57:15,611 WARNING: Invalid filename format: Wafer_25012020_142112.csv
+2025-07-13 15:57:15,626 INFO: [BAD] Wafer_20012020_135132.csv: Invalid filename format
+2025-07-13 15:57:15,626 INFO: [BAD] Wafer_15012020_130532.csv: Invalid filename format
+2025-07-13 15:57:15,627 INFO: Processing file: Wafer_21012020_143634.csv
+2025-07-13 15:57:15,628 WARNING: Invalid filename format: Wafer_21012020_143634.csv
+2025-07-13 15:57:15,628 INFO: File SHA256: dd94e2657b6ccd31...
+2025-07-13 15:57:15,627 INFO: Processing file: Wafer_08012020_120000.csv
+2025-07-13 15:57:15,629 INFO: [BAD] Wafer_25012020_142112.csv: Invalid filename format
+2025-07-13 15:57:15,630 INFO: Column validation passed using hash comparison.
+2025-07-13 15:57:15,630 WARNING: Invalid filename format: Wafer_08012020_120000.csv
+2025-07-13 15:57:15,630 INFO: [BAD] Wafer_21012020_143634.csv: Invalid filename format
+2025-07-13 15:57:15,637 INFO: Processing file: Wafer_14012020_113045.csv
+2025-07-13 15:57:15,637 WARNING: Invalid filename format: Wafer_14012020_113045.csv
+2025-07-13 15:57:15,630 INFO: Processing file: Wafer_07012020_223345.csv
+2025-07-13 15:57:15,638 WARNING: Invalid filename format: Wafer_07012020_223345.csv
+2025-07-13 15:57:15,637 INFO: [GOOD] wafer_20022020_090716_dd94e265.csv
+2025-07-13 15:57:15,639 INFO: Processing file: wafer_27012020_080911.csv
+2025-07-13 15:57:15,724 INFO: [BAD] Wafer_08012020_120000.csv: Invalid filename format
+2025-07-13 15:57:15,724 INFO: Processing file: wafer_16012020_134553.csv
+2025-07-13 15:57:15,726 INFO: [BAD] Wafer_14012020_113045.csv: Invalid filename format
+2025-07-13 15:57:15,726 INFO: Processing file: wafer_07012020_041011.csv
+2025-07-13 15:57:15,727 INFO: [BAD] Wafer_07012020_223345.csv: Invalid filename format
+2025-07-13 15:57:15,727 INFO: Processing file: wafer_16012020_051629.csv
+2025-07-13 15:57:15,729 INFO: File SHA256: ba78fb9374372dad...
+2025-07-13 15:57:15,730 INFO: Column validation passed using hash comparison.
+2025-07-13 15:57:15,749 INFO: File SHA256: de0a888a8ee25bff...
+2025-07-13 15:57:15,749 INFO: File SHA256: e1e13189cb272301...
+2025-07-13 15:57:15,750 WARNING: Last column should be 'Output' or 'Good/Bad', got 'Sensor-590'
+2025-07-13 15:57:15,750 INFO: [GOOD] wafer_27012020_080911_ba78fb93.csv
+2025-07-13 15:57:15,751 INFO: Column validation passed using hash comparison.
+2025-07-13 15:57:15,751 WARNING: Column validation failed: Last column should be 'Output' or 'Good/Bad', got 'Sensor-590'
+2025-07-13 15:57:15,752 INFO: Processing file: Wafer_text_130532.csv
+2025-07-13 15:57:15,769 INFO: File SHA256: b86db3f4308196a0...
+2025-07-13 15:57:15,770 WARNING: Invalid filename format: Wafer_text_130532.csv
+2025-07-13 15:57:15,771 INFO: Column validation passed using hash comparison.
+2025-07-13 15:57:15,771 INFO: [GOOD] wafer_07012020_041011_e1e13189.csv
+2025-07-13 15:57:15,773 INFO: [BAD] wafer_16012020_134553.csv: Last column should be 'Output' or 'Good/Bad', got 'Sensor-590'
+2025-07-13 15:57:15,777 INFO: Processing file: Wafer_12012020_111213.csv
+2025-07-13 15:57:15,778 WARNING: Invalid filename format: Wafer_12012020_111213.csv
+2025-07-13 15:57:15,775 INFO: Processing file: wafer_20012020_090818.csv
+2025-07-13 15:57:15,778 INFO: [BAD] Wafer_text_130532.csv: Invalid filename format
+2025-07-13 15:57:15,779 INFO: Processing file: Wafer_10012020_131534.csv
+2025-07-13 15:57:15,779 WARNING: Invalid filename format: Wafer_10012020_131534.csv
+2025-07-13 15:57:15,794 INFO: [BAD] Wafer_12012020_111213.csv: Invalid filename format
+2025-07-13 15:57:15,794 INFO: Processing file: Wafer_23012020_163456.csv
+2025-07-13 15:57:15,794 WARNING: Invalid filename format: Wafer_23012020_163456.csv
+2025-07-13 15:57:15,802 INFO: File SHA256: f1d2f61c83b11721...
+2025-07-13 15:57:15,803 INFO: [BAD] Wafer_10012020_131534.csv: Invalid filename format
+2025-07-13 15:57:15,803 INFO: Processing file: wafer_28042020_031911.csv
+2025-07-13 15:57:15,803 INFO: Column validation passed using hash comparison.
+2025-07-13 15:57:15,804 INFO: [GOOD] wafer_16012020_051629_b86db3f4.csv
+2025-07-13 15:57:15,805 INFO: Processing file: Wafer_13012020_141000.csv
+2025-07-13 15:57:15,805 WARNING: Column 'Sensor-16' expects float, got 'abc'
+2025-07-13 15:57:15,806 WARNING: Invalid filename format: Wafer_13012020_141000.csv
+2025-07-13 15:57:15,806 WARNING: Row 6 dtype validation failed: Column 'Sensor-16' expects float, got 'abc'
+2025-07-13 15:57:15,806 INFO: [BAD] wafer_20012020_090818.csv: Row 6: Column 'Sensor-16' expects float, got 'abc'
+2025-07-13 15:57:15,807 INFO: Processing file: wafer_21012020_080913.csv
+2025-07-13 15:57:15,856 INFO: [BAD] Wafer_13012020_141000.csv: Invalid filename format
+2025-07-13 15:57:15,856 INFO: Processing file: wafer_29012020_050617.csv
+2025-07-13 15:57:15,856 INFO: [BAD] Wafer_23012020_163456.csv: Invalid filename format
+2025-07-13 15:57:15,856 INFO: Processing file: Wafer_07012020_000000.csv
+2025-07-13 15:57:15,857 WARNING: Invalid filename format: Wafer_07012020_000000.csv
+2025-07-13 15:57:15,860 INFO: File SHA256: d1605198b5041901...
+2025-07-13 15:57:15,865 INFO: File SHA256: a54dc98c16a63418...
+2025-07-13 15:57:15,865 INFO: [BAD] Wafer_07012020_000000.csv: Invalid filename format
+2025-07-13 15:57:15,866 INFO: Processing file: wafer_28012020_051011.csv
+2025-07-13 15:57:15,867 INFO: Column validation passed using hash comparison.
+2025-07-13 15:57:15,879 INFO: Column validation passed using hash comparison.
+2025-07-13 15:57:15,882 INFO: File SHA256: 8b7ece090bae683a...
+2025-07-13 15:57:15,903 INFO: Column validation passed using hash comparison.
+2025-07-13 15:57:15,907 INFO: [GOOD] wafer_21012020_080913_d1605198.csv
+2025-07-13 15:57:15,908 INFO: Processing file: wafer_28012020_090817.csv
+2025-07-13 15:57:15,928 INFO: [GOOD] wafer_28042020_031911_a54dc98c.csv
+2025-07-13 15:57:15,930 INFO: Processing file: wafer_23012020_011008.csv
+2025-07-13 15:57:15,936 INFO: [GOOD] wafer_29012020_050617_8b7ece09.csv
+2025-07-13 15:57:15,937 INFO: Processing file: Wafer12_20012.csv
+2025-07-13 15:57:15,938 WARNING: Invalid filename format: Wafer12_20012.csv
+2025-07-13 15:57:15,938 INFO: File SHA256: a6124fd085b75843...
+2025-07-13 15:57:15,939 INFO: Column validation passed using hash comparison.
+2025-07-13 15:57:15,955 INFO: File SHA256: 57d4d4b20e3f9157...
+2025-07-13 15:57:15,956 INFO: [GOOD] wafer_28012020_051011_a6124fd0.csv
+2025-07-13 15:57:15,957 INFO: Column validation passed using hash comparison.
+2025-07-13 15:57:15,959 INFO: File SHA256: ad2f1ded6ecad58b...
+2025-07-13 15:57:15,959 INFO: Processing file: Wafer_15010_130532.csv
+2025-07-13 15:57:15,975 INFO: [BAD] Wafer12_20012.csv: Invalid filename format
+2025-07-13 15:57:15,976 WARNING: Invalid filename format: Wafer_15010_130532.csv
+2025-07-13 15:57:15,976 INFO: Column validation passed using hash comparison.
+2025-07-13 15:57:15,976 INFO: [GOOD] wafer_28012020_090817_57d4d4b2.csv
+2025-07-13 15:57:15,986 INFO: Processing file: Wafer_19012020_141432.csv
+2025-07-13 15:57:15,977 INFO: Processing file: wafer_22022020_041119.csv
+2025-07-13 15:57:15,987 WARNING: Invalid filename format: Wafer_19012020_141432.csv
+2025-07-13 15:57:15,987 INFO: [BAD] Wafer_15010_130532.csv: Invalid filename format
+2025-07-13 15:57:15,987 INFO: Processing file: Wafer_18012020_121532.csv
+2025-07-13 15:57:15,987 WARNING: Invalid filename format: Wafer_18012020_121532.csv
+2025-07-13 15:57:15,997 INFO: [GOOD] wafer_23012020_011008_ad2f1ded.csv
+2025-07-13 15:57:15,997 INFO: Processing file: wafer_20012020_090819.csv
+2025-07-13 15:57:16,061 INFO: [BAD] Wafer_19012020_141432.csv: Invalid filename format
+2025-07-13 15:57:16,061 INFO: Processing file: wafer_31012020_090811.csv
+2025-07-13 15:57:16,062 INFO: [BAD] Wafer_18012020_121532.csv: Invalid filename format
+2025-07-13 15:57:16,062 INFO: Processing file: Wafer_12012020_111.csv
+2025-07-13 15:57:16,062 WARNING: Invalid filename format: Wafer_12012020_111.csv
+2025-07-13 15:57:16,063 INFO: File SHA256: e0a35d2e6b52b2ce...
+2025-07-13 15:57:16,064 INFO: Column validation passed using hash comparison.
+2025-07-13 15:57:16,065 INFO: File SHA256: 418c0260c3383dd7...
+2025-07-13 15:57:16,083 INFO: Column validation passed using hash comparison.
+2025-07-13 15:57:16,086 INFO: [BAD] Wafer_12012020_111.csv: Invalid filename format
+2025-07-13 15:57:16,090 INFO: File SHA256: e747459419f96d6c...
+2025-07-13 15:57:16,091 INFO: Column validation passed using hash comparison.
+2025-07-13 15:57:16,123 INFO: [GOOD] wafer_20012020_090819_e0a35d2e.csv
+2025-07-13 15:57:16,124 INFO: [GOOD] wafer_22022020_041119_418c0260.csv
+2025-07-13 15:57:16,126 INFO: [GOOD] wafer_31012020_090811_e7474594.csv
+2025-07-13 15:57:16,127 INFO: 
+============================================================
+Training Validation Summary:
+Total files: 43
+Valid files: 16 (37.2%)
+Invalid files: 27 (62.8%)
+Note: Missing value handling will occur during preprocessing stage
+============================================================
+2025-07-13 15:57:16,127 INFO: Rejection reasons:
+2025-07-13 15:57:16,127 INFO:   Wafer_11012020_151432.csv: Invalid filename format
+2025-07-13 15:57:16,127 INFO:   Waferdefault_15010_130532.csv: Invalid filename format
+2025-07-13 15:57:16,127 INFO:   wafer_27012020_080912.csv: Columns do not match schema
+2025-07-13 15:57:16,127 INFO:   Wafer_24012020_150121.csv: Invalid filename format
+2025-07-13 15:57:16,127 INFO:   Wafer_22012020_173245.csv: Invalid filename format
+2025-07-13 15:57:16,127 INFO:   Wafer_fault_detection.csv: Invalid filename format
+2025-07-13 15:57:16,127 INFO:   wafer_17012020_125434.csv: Last column should be 'Output' or 'Good/Bad', got 'Sensor-590'
+2025-07-13 15:57:16,127 INFO:   Wafer_20012020_135132.csv: Invalid filename format
+2025-07-13 15:57:16,127 INFO:   Wafer_15012020_130532.csv: Invalid filename format
+2025-07-13 15:57:16,128 INFO:   Wafer_25012020_142112.csv: Invalid filename format
+2025-07-13 15:57:16,128 INFO:   Wafer_21012020_143634.csv: Invalid filename format
+2025-07-13 15:57:16,128 INFO:   Wafer_08012020_120000.csv: Invalid filename format
+2025-07-13 15:57:16,128 INFO:   Wafer_14012020_113045.csv: Invalid filename format
+2025-07-13 15:57:16,128 INFO:   Wafer_07012020_223345.csv: Invalid filename format
+2025-07-13 15:57:16,128 INFO:   wafer_16012020_134553.csv: Last column should be 'Output' or 'Good/Bad', got 'Sensor-590'
+2025-07-13 15:57:16,128 INFO:   Wafer_text_130532.csv: Invalid filename format
+2025-07-13 15:57:16,128 INFO:   Wafer_12012020_111213.csv: Invalid filename format
+2025-07-13 15:57:16,128 INFO:   Wafer_10012020_131534.csv: Invalid filename format
+2025-07-13 15:57:16,128 INFO:   wafer_20012020_090818.csv: Row 6: Column 'Sensor-16' expects float, got 'abc'
+2025-07-13 15:57:16,128 INFO:   Wafer_13012020_141000.csv: Invalid filename format
+2025-07-13 15:57:16,128 INFO:   Wafer_23012020_163456.csv: Invalid filename format
+2025-07-13 15:57:16,128 INFO:   Wafer_07012020_000000.csv: Invalid filename format
+2025-07-13 15:57:16,128 INFO:   Wafer12_20012.csv: Invalid filename format
+2025-07-13 15:57:16,128 INFO:   Wafer_15010_130532.csv: Invalid filename format
+2025-07-13 15:57:16,128 INFO:   Wafer_19012020_141432.csv: Invalid filename format
+2025-07-13 15:57:16,128 INFO:   Wafer_18012020_121532.csv: Invalid filename format
+2025-07-13 15:57:16,128 INFO:   Wafer_12012020_111.csv: Invalid filename format
