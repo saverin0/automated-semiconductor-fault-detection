@@ -77,8 +77,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- [List any references, datasets, or research papers that informed this project]
-- [Any collaborators or contributors]
