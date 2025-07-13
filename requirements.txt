@@ -1,0 +1,30 @@
+# Core Python packages
+pandas>=1.5.0
+numpy>=1.21.0
+
+# Google Cloud
+google-cloud-bigquery>=3.0.0
+
+# Environment and configuration
+python-dotenv>=0.19.0
+
+# JSON processing (optional, faster than built-in json)
+orjson>=3.8.0
+
+# Utilities
+pathlib2>=2.3.0
+
+# Data processing and ML
+scikit-learn>=1.0.0
+xgboost>=1.6.0
+joblib>=1.1.0
+
+# Logging (built-in, but listing for clarity)
+# logging - built into Python
+
+# Threading and concurrency (built-in)
+# concurrent.futures - built into Python
+# threading - built into Python
+
+# Standard library dependencies (built-in, no installation needed)
+# os, re, csv, shutil, datetime, hashlib, time, functools, dataclasses, typing

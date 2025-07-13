@@ -16,6 +16,7 @@ __pycache__/
 # Logs (optional)
 logs/
 *.log
+*.log.*
 
 # Data folders (optional, if you don't want to track data)
 data/
@@ -47,7 +48,6 @@ venv/
 # Build directories
 build/
 # Distribution directories
-
 dist/
 # Cython debug symbols
 cython_debug/
@@ -56,3 +56,13 @@ cython_debug/
 # PyInstaller creates a build folder and a dist folder
 # which are not needed in version control
 # PyInstaller specific
+
+# Byte-compiled / optimized / DLL files
+*.egg-info/
+*.pkl
+*.h5
+*.db
+*.sqlite3
+*.sav
+*.npy
+*.npz

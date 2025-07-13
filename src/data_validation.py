@@ -35,11 +35,11 @@ class ValidatorConfig:
         missing = [f for f in required if not getattr(self, f)]
         if missing:
             raise ValueError(f"Missing required config fields: {', '.join(missing)}")
-        if self.mode != 'training':
-            raise ValueError(f"Invalid mode: {self.mode}. Only 'training' mode is supported.")
+        if self.mode not in ('training', 'prediction'):
+            raise ValueError(f"Invalid mode: {self.mode}. Must be 'training' or 'prediction'.")
 
-def setup_environment():
-    """Setup environment variables and paths."""
+def setup_environment(mode: str = "training"):
+    """Setup environment variables and paths for specified mode."""
     BASE_DIR = Path(os.getenv("BASE_DIR", "/workspaces/automated-semiconductor-fault-detection"))
 
     # Fallback logging
@@ -53,20 +53,34 @@ def setup_environment():
         level=logging.INFO,
         format='%(asctime)s %(levelname)s %(message)s'
     )
-    logging.info("Fallback logging initialized.")
+    logging.info(f"Fallback logging initialized for {mode} mode.")
 
-    # Training configuration
+    # Mode-specific configuration
     try:
-        config = ValidatorConfig(
-            input_dir=str(validate_env_path(os.environ['TRAINING_INPUT_DIR'], BASE_DIR)),
-            good_dir=str(validate_env_path(os.environ['TRAINING_GOOD_DIR'], BASE_DIR)),
-            bad_dir=str(validate_env_path(os.environ['TRAINING_BAD_DIR'], BASE_DIR)),
-            schema_file=str(validate_env_path(os.environ['TRAINING_SCHEMA_FILE'], BASE_DIR)),
-            log_file=str(validate_env_path(os.environ['TRAINING_LOG_FILE'], BASE_DIR)),
-            filename_pattern=os.getenv('FILENAME_PATTERN', r"^wafer_\d{8}_\d{6}\.csv$"),
-            max_workers=int(os.getenv('MAX_WORKERS', '4')),
-            mode="training"
-        )
+        if mode == "training":
+            config = ValidatorConfig(
+                input_dir=str(validate_env_path(os.environ['TRAINING_INPUT_DIR'], BASE_DIR)),
+                good_dir=str(validate_env_path(os.environ['TRAINING_GOOD_DIR'], BASE_DIR)),
+                bad_dir=str(validate_env_path(os.environ['TRAINING_BAD_DIR'], BASE_DIR)),
+                schema_file=str(validate_env_path(os.environ['TRAINING_SCHEMA_FILE'], BASE_DIR)),
+                log_file=str(validate_env_path(os.environ['TRAINING_LOG_FILE'], BASE_DIR)),
+                filename_pattern=os.getenv('FILENAME_PATTERN', r"^wafer_\d{8}_\d{6}\.csv$"),
+                max_workers=int(os.getenv('MAX_WORKERS', '4')),
+                mode="training"
+            )
+        elif mode == "prediction":
+            config = ValidatorConfig(
+                input_dir=str(validate_env_path(os.environ['PREDICTION_INPUT_DIR'], BASE_DIR)),
+                good_dir=str(validate_env_path(os.environ['PREDICTION_GOOD_DIR'], BASE_DIR)),
+                bad_dir=str(validate_env_path(os.environ['PREDICTION_BAD_DIR'], BASE_DIR)),
+                schema_file=str(validate_env_path(os.environ['PREDICTION_SCHEMA_FILE'], BASE_DIR)),
+                log_file=str(validate_env_path(os.environ['PREDICTION_LOG_FILE'], BASE_DIR)),
+                filename_pattern=os.getenv('FILENAME_PATTERN', r"^wafer_\d{8}_\d{6}\.csv$"),
+                max_workers=int(os.getenv('MAX_WORKERS', '4')),
+                mode="prediction"
+            )
+        else:
+            raise ValueError(f"Invalid mode: {mode}")
 
         # Ensure paths exist
         for path_str in [config.input_dir, config.good_dir, config.bad_dir]:
@@ -74,12 +88,12 @@ def setup_environment():
         ensure_path_exists(Path(config.schema_file), is_file=True)
         ensure_path_exists(Path(config.log_file), is_file=True)
 
-        logging.info("Environment setup and config validation successful.")
+        logging.info(f"Environment setup and config validation successful for {mode} mode.")
         return config
 
     except (KeyError, ValueError) as e:
-        logging.error(f"Environment setup failed: {e}", exc_info=True)
-        raise RuntimeError(f"Invalid environment configuration: {e}")
+        logging.error(f"Environment setup failed for {mode} mode: {e}", exc_info=True)
+        raise RuntimeError(f"Invalid environment configuration for {mode}: {e}")
 
 def get_logger(log_file: str, mode: str) -> logging.Logger:
     """Get a logger with mode-specific configuration."""
@@ -111,7 +125,7 @@ def file_hash(path: Path, algo: str = "sha256") -> str:
 
 class FileValidator:
     def __init__(self, config: ValidatorConfig):
-        logging.info("Initializing FileValidator...")
+        logging.info(f"Initializing FileValidator for {config.mode} mode...")
         config.validate()
         self.config = config
         self.input_dir = Path(config.input_dir)
@@ -211,14 +225,20 @@ class FileValidator:
         expected_norm = [normalize_colname(n) for n in self.expected_column_names]
         header_norm = [normalize_colname(n) for n in header]
 
-        # Check last column for training mode
-        if header_norm[-1] not in ("output", "good/bad"):
-            self.logger.warning(f"Last column should be 'Output' or 'Good/Bad', got '{header[-1]}'")
-            return False, f"Last column should be 'Output' or 'Good/Bad', got '{header[-1]}'"
-
-        # Compare all columns except the last one using hash
-        header_to_compare = header_norm[:-1]
-        expected_to_compare = expected_norm[:-1]
+        # Mode-specific validation
+        if self.config.mode == "training":
+            # Check last column for training mode
+            if header_norm[-1] not in ("output", "good/bad"):
+                self.logger.warning(f"Last column should be 'Output' or 'Good/Bad', got '{header[-1]}'")
+                return False, f"Last column should be 'Output' or 'Good/Bad', got '{header[-1]}'"
+            
+            # Compare all columns except the last one using hash
+            header_to_compare = header_norm[:-1]
+            expected_to_compare = expected_norm[:-1]
+        else:  # prediction mode
+            # For prediction, we don't expect the output column
+            header_to_compare = header_norm
+            expected_to_compare = expected_norm
 
         if hash_columns(header_to_compare) == hash_columns(expected_to_compare):
             self.logger.info("Column validation passed using hash comparison.")
@@ -234,7 +254,12 @@ class FileValidator:
 
     def validate_dtypes(self, row: List[str], header: List[str]) -> Tuple[bool, Optional[str]]:
         """Validate row data types against schema."""
-        for idx, (value, dtype) in enumerate(zip(row, self.expected_types)):
+        # For prediction mode, adjust expected types (no output column)
+        expected_types = self.expected_types
+        if self.config.mode == "prediction" and len(row) < len(expected_types):
+            expected_types = expected_types[:len(row)]
+        
+        for idx, (value, dtype) in enumerate(zip(row, expected_types)):
             # Allow missing values - they will be handled later in the preprocessing stage
             if not value or value.strip() == "":
                 continue
@@ -289,9 +314,14 @@ class FileValidator:
                 # Validate data rows
                 data_rows = []
                 for row_num, row in enumerate(reader, start=2):
+                    # For prediction mode, adjust row length
+                    expected_len = len(self.expected_types)
+                    if self.config.mode == "prediction":
+                        expected_len = len(self.expected_column_names)
+                    
                     # Pad short rows
-                    if len(row) < len(self.expected_types):
-                        row += [""] * (len(self.expected_types) - len(row))
+                    if len(row) < expected_len:
+                        row += [""] * (expected_len - len(row))
 
                     valid, error = self.validate_dtypes(row, header)
                     if not valid:
@@ -308,7 +338,6 @@ class FileValidator:
                     return
 
                 # Basic sanity check: reject only if ALL columns are completely null
-                # (Following the original project's approach - let preprocessing handle missing values)
                 if data_rows:
                     columns = list(zip(*data_rows))
                     completely_null_columns = []
@@ -316,8 +345,8 @@ class FileValidator:
                         if all(not cell or cell.strip() == "" for cell in col):
                             completely_null_columns.append(header[idx])
 
-                    # Only reject if ALL feature columns (excluding target) are completely null
-                    feature_columns = header[:-1]  # Exclude target column
+                    # Only reject if ALL feature columns are completely null
+                    feature_columns = header[:-1] if self.config.mode == "training" else header
                     if len(completely_null_columns) >= len(feature_columns):
                         self.logger.warning(f"All feature columns are completely null: {entry.name}")
                         self._reject_file(entry, "All feature columns contain only null values")

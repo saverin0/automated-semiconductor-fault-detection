@@ -1,5 +1,7 @@
 import pandas as pd
 from google.cloud import bigquery
+from google.auth import impersonated_credentials
+import google.auth
 import json
 from pathlib import Path
 import os
@@ -93,7 +95,17 @@ def upload_good_csvs_to_bigquery(
     try:
         if db_logger:
             db_logger.info("Starting upload_good_csvs_to_bigquery process.")
-        client = bigquery.Client(project=project_id, location=location)
+        source_creds, _ = google.auth.default(scopes=['https://www.googleapis.com/auth/cloud-platform'])
+        target_creds = impersonated_credentials.Credentials(
+            source_credentials=source_creds,
+            target_principal="bigquery-uploader-2@machine-learning-461308.iam.gserviceaccount.com",  # <-- update here
+            target_scopes=[
+                'https://www.googleapis.com/auth/bigquery',
+                'https://www.googleapis.com/auth/cloud-platform'
+            ],
+            lifetime=3600
+        )
+        client = bigquery.Client(credentials=target_creds, project=project_id, location=location)
         create_dataset_if_not_exists(client, dataset_id, location, db_logger=db_logger)
         delete_table_if_exists(client, dataset_id, table_id, db_logger=db_logger)
         create_table(client, dataset_id, table_id, schema, db_logger=db_logger)
