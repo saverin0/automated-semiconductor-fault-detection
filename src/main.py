@@ -13,7 +13,13 @@ from .data_ingestion.training_good_csv_to_db import (
     export_bigquery_table_to_csv,
     load_bq_schema_from_json
 )
+from .data_ingestion.prediction_good_csv_to_db import (
+    upload_prediction_csvs_to_bigquery,
+    export_prediction_table_to_csv,
+    load_bq_schema_from_json as load_prediction_schema
+)
 from .data_preprocessing.preprocessing import train_models
+from .prediction.predictor import predict_from_bigquery_data
 import joblib
 from src.best_model_finder.tuner import Model_Finder
 
@@ -71,15 +77,26 @@ def get_db_logger(log_file: str) -> logging.Logger:
     logger.addHandler(handler)
     return logger
 
-def load_config() -> Dict[str, str]:
-    """Load configuration from environment variables"""
-    required_vars = [
-        'TRAINING_INPUT_DIR',
-        'TRAINING_GOOD_DIR',
-        'TRAINING_BAD_DIR',
-        'TRAINING_SCHEMA_FILE',
-        'TRAINING_LOG_FILE'
-    ]
+def load_config(mode: str = "training") -> Dict[str, str]:
+    """Load configuration from environment variables for specified mode"""
+    if mode == "training":
+        required_vars = [
+            'TRAINING_INPUT_DIR',
+            'TRAINING_GOOD_DIR',
+            'TRAINING_BAD_DIR',
+            'TRAINING_SCHEMA_FILE',
+            'TRAINING_LOG_FILE'
+        ]
+    elif mode == "prediction":
+        required_vars = [
+            'PREDICTION_INPUT_DIR',
+            'PREDICTION_GOOD_DIR',
+            'PREDICTION_BAD_DIR',
+            'PREDICTION_SCHEMA_FILE',
+            'PREDICTION_LOG_FILE'
+        ]
+    else:
+        raise ValueError(f"Invalid mode: {mode}")
 
     config = {}
     missing_vars = []
@@ -92,7 +109,7 @@ def load_config() -> Dict[str, str]:
 
     if missing_vars:
         msg = (
-            f"Missing required environment variables: {', '.join(missing_vars)}\n"
+            f"Missing required environment variables for {mode} mode: {', '.join(missing_vars)}\n"
             f"Please ensure all required variables are set in the .env file."
         )
         main_logger.error(msg, exc_info=True)
@@ -103,8 +120,15 @@ def load_config() -> Dict[str, str]:
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
-        description='Run schema creation and data validation for wafer data (training only)',
+        description='Run schema creation, data validation, and processing for wafer data',
         formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    parser.add_argument(
+        '--mode',
+        choices=['training', 'prediction', 'both'],
+        default='training',
+        help='Processing mode: training, prediction, or both (default: training)'
     )
 
     parser.add_argument(
@@ -119,12 +143,30 @@ def parse_args() -> argparse.Namespace:
         help='Skip data validation step'
     )
 
+    parser.add_argument(
+        '--skip-upload',
+        action='store_true',
+        help='Skip BigQuery upload step'
+    )
+
+    parser.add_argument(
+        '--skip-training',
+        action='store_true',
+        help='Skip model training step (training mode only)'
+    )
+
+    parser.add_argument(
+        '--skip-prediction',
+        action='store_true',
+        help='Skip prediction step (prediction mode only)'
+    )
+
     return parser.parse_args()
 
-def run_schema_creation(config: Dict[str, str]) -> bool:
-    """Run the schema creation process"""
+def run_schema_creation(mode: str = "training") -> bool:
+    """Run the schema creation process for specified mode"""
     main_logger.info("="*60)
-    main_logger.info("Starting schema creation process...")
+    main_logger.info(f"Starting schema creation process for {mode} mode...")
     main_logger.info("="*60)
 
     try:
@@ -139,87 +181,136 @@ def run_schema_creation(config: Dict[str, str]) -> bool:
             schema_dir=schema_dir,
             logger=schema_logger
         )
-        schema_creator.generate_schema_training(
-            filename=os.getenv("TRAINING_SCHEMA_FILENAME"),
-            num_columns=int(os.getenv("TRAINING_NUM_COLUMNS"))
-        )
-        main_logger.info("Schema creation completed successfully")
+        
+        if mode == "training":
+            schema_creator.generate_schema_training(
+                filename=os.getenv("TRAINING_SCHEMA_FILENAME"),
+                num_columns=int(os.getenv("TRAINING_NUM_COLUMNS"))
+            )
+        elif mode == "prediction":
+            schema_creator.generate_schema_prediction(
+                filename=os.getenv("PREDICTION_SCHEMA_FILENAME"),
+                num_columns=int(os.getenv("PREDICTION_NUM_COLUMNS"))
+            )
+        
+        main_logger.info(f"Schema creation for {mode} mode completed successfully")
         return True
     except Exception as e:
-        main_logger.error(f"Error in schema creation: {e}", exc_info=True)
+        main_logger.error(f"Error in {mode} schema creation: {e}", exc_info=True)
         return False
 
-def run_data_validation(config: Dict[str, str]) -> bool:
-    """Run the data validation process (training only)"""
+def run_data_validation(mode: str = "training") -> bool:
+    """Run the data validation process for specified mode"""
     main_logger.info("="*60)
-    main_logger.info("Starting data validation process...")
+    main_logger.info(f"Starting data validation process for {mode} mode...")
     main_logger.info("="*60)
 
     try:
-        # FIXED: Use setup_environment() instead of TRAINING_CONFIG
-        validator_config = data_validation.setup_environment()
-        training_validator = data_validation.FileValidator(validator_config)
-        training_validator.setup_directories()
-        training_validator.validate_files_parallel()
-        training_validator.summary()
-        main_logger.info("Data validation completed successfully")
+        validator_config = data_validation.setup_environment(mode)
+        validator = data_validation.FileValidator(validator_config)
+        validator.setup_directories()
+        validator.validate_files_parallel()
+        validator.summary()
+        main_logger.info(f"Data validation for {mode} mode completed successfully")
         return True
     except Exception as e:
-        main_logger.error(f"Error in data validation: {e}", exc_info=True)
+        main_logger.error(f"Error in {mode} data validation: {e}", exc_info=True)
         return False
 
-def run_database_upload_and_export() -> bool:
-    """Upload good CSVs to BigQuery and export the table to CSV, with DB logging."""
+def run_database_upload_and_export(mode: str = "training") -> bool:
+    """Upload good CSVs to BigQuery and export the table to CSV for specified mode."""
     db_log_file = os.getenv("DB_LOG_FILE", "logs/db_process.log")
     db_log_file = validate_env_path(db_log_file, BASE_DIR)
     ensure_path_exists(db_log_file, is_file=True)
     db_logger = get_db_logger(str(db_log_file))
 
     try:
-        good_dir = os.getenv("GOOD_DIR")
         project_id = os.getenv("BQ_PROJECT")
         dataset_id = os.getenv("BQ_DATASET")
-        table_id = os.getenv("BQ_TABLE")
         location = os.getenv("BQ_LOCATION", "US")
-        schema_json_path = os.getenv("BQ_SCHEMA_JSON")
 
-        if not all([good_dir, project_id, dataset_id, table_id, schema_json_path]):
-            db_logger.error("Missing one or more required BigQuery environment variables.")
-            return False
+        if mode == "training":
+            good_dir = os.getenv("TRAINING_GOOD_DIR")
+            table_id = os.getenv("BQ_TABLE_TRAINING", os.getenv("BQ_TABLE"))  # fallback for compatibility
+            schema_json_path = os.getenv("BQ_SCHEMA_JSON")
 
-        schema, cleaned_col_map = load_bq_schema_from_json(schema_json_path)
+            if not all([good_dir, project_id, dataset_id, table_id, schema_json_path]):
+                db_logger.error("Missing one or more required BigQuery environment variables.")
+                return False
 
-        db_logger.info("Uploading good CSVs to BigQuery...")
-        upload_good_csvs_to_bigquery(
-            good_dir, project_id, dataset_id, table_id, schema, cleaned_col_map, location, db_logger=db_logger
-        )
+            schema, cleaned_col_map = load_bq_schema_from_json(schema_json_path)
 
-        db_logger.info("Exporting BigQuery table to CSV...")
-        export_bigquery_table_to_csv(
-            project_id, dataset_id, table_id, "exported_data.csv", location, db_logger=db_logger
-        )
-        db_logger.info("Database upload and export completed successfully.")
-        return True
+            db_logger.info("Uploading good CSVs to BigQuery...")
+            upload_good_csvs_to_bigquery(
+                good_dir, project_id, dataset_id, table_id, schema, cleaned_col_map, location, db_logger=db_logger
+            )
+
+            db_logger.info("Exporting BigQuery table to CSV...")
+            export_bigquery_table_to_csv(
+                project_id, dataset_id, table_id, "exported_data.csv", location, db_logger=db_logger
+            )
+            db_logger.info("Database upload and export completed successfully.")
+            return True
+        elif mode == "prediction":
+            prediction_dir = os.getenv("PREDICTION_GOOD_DIR")
+            table_id = os.getenv("BQ_TABLE_PREDICTION", os.getenv("BQ_TABLE"))  # fallback for compatibility
+            schema_json_path = os.getenv("BQ_SCHEMA_JSON_PREDICTION")
+
+            if not all([prediction_dir, project_id, dataset_id, table_id, schema_json_path]):
+                db_logger.error("Missing one or more required BigQuery environment variables for prediction.")
+                return False
+
+            schema, cleaned_col_map = load_prediction_schema(schema_json_path)
+
+            db_logger.info("Uploading prediction CSVs to BigQuery...")
+            upload_prediction_csvs_to_bigquery(
+                prediction_dir, project_id, dataset_id, table_id, schema, cleaned_col_map, location, db_logger=db_logger
+            )
+
+            db_logger.info("Exporting prediction table to CSV...")
+            export_prediction_table_to_csv(
+                project_id, dataset_id, table_id, "exported_prediction_data.csv", location, db_logger=db_logger
+            )
+            db_logger.info("Prediction data upload and export completed successfully.")
+            return True
     except Exception as e:
         db_logger.error(f"Database upload/export failed: {e}", exc_info=True)
         return False
 
+def run_model_training() -> bool:
+    """Run model training on the exported data (training mode only)."""
+    try:
+        train_models("exported_data.csv", main_logger)
+        main_logger.info("Model training completed successfully.")
+        return True
+    except Exception as e:
+        main_logger.error(f"Model training failed: {e}", exc_info=True)
+        return False
 
+def run_prediction() -> bool:
+    """Run prediction on the exported prediction data (prediction mode only)."""
+    try:
+        predict_from_bigquery_data("exported_prediction_data.csv", main_logger)
+        main_logger.info("Prediction completed successfully.")
+        return True
+    except Exception as e:
+        main_logger.error(f"Prediction failed: {e}", exc_info=True)
+        return False
 
 def main():
     """Main function to orchestrate the entire process (training only)"""
     try:
         args = parse_args()
-        config = load_config()
+        config = load_config(args.mode)
 
         main_logger.info("="*60)
-        main_logger.info("Starting Wafer Data Processing Pipeline (training only)")
+        main_logger.info("Starting Wafer Data Processing Pipeline")
         main_logger.info("="*60)
 
         # Step 1: Schema Creation (if not skipped)
         if not args.skip_schema:
             main_logger.info("\nStep 1: Creating JSON Schema")
-            if not run_schema_creation(config):
+            if not run_schema_creation(args.mode):
                 main_logger.error("Schema creation failed. Stopping process.")
                 sys.exit(1)
         else:
@@ -228,7 +319,7 @@ def main():
         # Step 2: Data Validation (if not skipped)
         if not args.skip_validation:
             main_logger.info("\nStep 2: Running Data Validation")
-            if not run_data_validation(config):
+            if not run_data_validation(args.mode):
                 main_logger.error("Data validation failed.")
                 sys.exit(1)
         else:
@@ -236,18 +327,29 @@ def main():
 
         # Step 3: Database Upload and Export
         main_logger.info("\nStep 3: Uploading to BigQuery and exporting table")
-        if not run_database_upload_and_export():
+        if not run_database_upload_and_export(args.mode):
             main_logger.error("Database upload/export failed.")
             sys.exit(1)
 
-        # Step 4: Preprocessing and Model Training
-        main_logger.info("\nStep 4: Preprocessing exported data and training models")
-        try:
-            train_models("exported_data.csv", main_logger)
-            main_logger.info("Preprocessing and model training completed successfully.")
-        except Exception as e:
-            main_logger.error(f"Preprocessing/model training failed: {e}", exc_info=True)
-            sys.exit(1)
+        # Step 4: Preprocessing and Model Training (training mode only)
+        if args.mode in ["training", "both"]:
+            if not args.skip_training:
+                main_logger.info("\nStep 4: Preprocessing exported data and training models")
+                if not run_model_training():
+                    main_logger.error("Model training failed.")
+                    sys.exit(1)
+            else:
+                main_logger.info("\nStep 4: Model training skipped (--skip-training flag used)")
+
+        # Step 5: Prediction (prediction mode only)
+        if args.mode in ["prediction", "both"]:
+            if not args.skip_prediction:
+                main_logger.info("\nStep 5: Running Prediction")
+                if not run_prediction():
+                    main_logger.error("Prediction failed.")
+                    sys.exit(1)
+            else:
+                main_logger.info("\nStep 5: Prediction skipped (--skip-prediction flag used)")
 
     except KeyboardInterrupt:
         main_logger.info("\nProcess interrupted by user")
