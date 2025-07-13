@@ -66,12 +66,20 @@ class WaferPredictor:
             Preprocessed data ready for prediction
         """
         try:
-            # Remove wafer column if present
-            if 'Wafer' in data.columns:
-                wafer_ids = data['Wafer'].copy()
-                data = data.drop('Wafer', axis=1)
-            else:
+            # Handle wafer ID column - check multiple possible column names
+            wafer_id_columns = ['Wafer', 'Unnamed: 0', 'wafer_id', 'id']
+            wafer_ids = None
+            
+            for col in wafer_id_columns:
+                if col in data.columns:
+                    wafer_ids = data[col].copy()
+                    data = data.drop(col, axis=1)
+                    self.logger.info(f"Found wafer ID column: {col}")
+                    break
+            
+            if wafer_ids is None:
                 wafer_ids = data.index
+                self.logger.info("Using row index as wafer IDs")
             
             # Handle missing values
             data = data.replace('?', np.nan)
@@ -86,12 +94,15 @@ class WaferPredictor:
                 else:
                     data[column].fillna(data[column].mode()[0] if not data[column].mode().empty else 'Unknown', inplace=True)
             
-            # Convert all columns to numeric where possible
+            # Convert all columns to numeric where possible, but be more careful
             for column in data.columns:
                 try:
-                    data[column] = pd.to_numeric(data[column], errors='ignore')
-                except:
-                    pass
+                    # Only convert if all non-null values can be converted to numeric
+                    pd.to_numeric(data[column], errors='raise')
+                    data[column] = pd.to_numeric(data[column], errors='coerce')
+                except (ValueError, TypeError):
+                    # If conversion fails, keep as-is and warn
+                    self.logger.warning(f"Column {column} contains non-numeric data, keeping as-is")
             
             # Store wafer IDs for later use
             data['wafer_id'] = wafer_ids

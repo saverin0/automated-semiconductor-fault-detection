@@ -866,3 +866,29 @@ Step 4: Preprocessing exported data and training models
 2025-07-13 14:02:25,792 - INFO - Saved RandomForest for cluster 1 as training_model/model_cluster_1_RandomForest.joblib
 2025-07-13 14:02:25,792 - INFO - Training and saving models for all clusters completed.
 2025-07-13 14:02:25,794 - INFO - Model training completed successfully.
+2025-07-13 15:47:01,850 - ERROR - Unexpected error: Invalid mode: both
+Traceback (most recent call last):
+  File "/app/src/main.py", line 304, in main
+    config = load_config(args.mode)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/main.py", line 99, in load_config
+    raise ValueError(f"Invalid mode: {mode}")
+ValueError: Invalid mode: both
+2025-07-13 15:57:15,079 - INFO - ============================================================
+2025-07-13 15:57:15,079 - INFO - Starting Wafer Data Processing Pipeline
+2025-07-13 15:57:15,080 - INFO - ============================================================
+2025-07-13 15:57:15,080 - INFO - 
+Step 1: Creating JSON Schema
+2025-07-13 15:57:15,080 - INFO - ============================================================
+2025-07-13 15:57:15,080 - INFO - Starting schema creation process for training mode...
+2025-07-13 15:57:15,081 - INFO - ============================================================
+2025-07-13 15:57:15,084 - INFO - Schema creation for training mode completed successfully
+2025-07-13 15:57:15,085 - INFO - 
+Step 2: Running Data Validation
+2025-07-13 15:57:15,085 - INFO - ============================================================
+2025-07-13 15:57:15,085 - INFO - Starting data validation process for training mode...
+2025-07-13 15:57:15,085 - INFO - ============================================================
+2025-07-13 15:57:16,128 - INFO - Data validation for training mode completed successfully
+2025-07-13 15:57:16,128 - INFO - 
+Step 3: Uploading to BigQuery and exporting table
+2025-07-13 15:57:23,709 - ERROR - Database upload/export failed.
