@@ -14,10 +14,13 @@ orjson>=3.8.0
 # Utilities
 pathlib2>=2.3.0
 
+
+plotly>=5.20.0
+
 # Data processing and ML
 scikit-learn>=1.0.0
 xgboost>=1.6.0
-joblib>=1.1.0
+joblib
 
 # Web Framework (NEW)
 flask>=3.0.0

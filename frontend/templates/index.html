@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semiconductor Fault Detection</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            padding-top: 20px;
+            background-color: #f5f5f5;
+        }
+        .stat-card {
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .good-card {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .bad-card {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .plot-container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4 rounded">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/">Semiconductor Fault Detection</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/upload">Upload Data</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/results">Results</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Semiconductor Fault Detection Dashboard</h1>
+                        <p class="card-text">
+                            Monitor and analyze semiconductor wafer quality predictions with advanced machine learning.
+                        </p>
+                        <a href="/upload" class="btn btn-primary">Upload New Data</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if has_data and stats.total > 0 %}
+            <h2 class="mb-3">Latest Prediction Summary</h2>
+            <p>From file: {{ recent_file }}</p>
+            
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Total Wafers</h5>
+                            <h2 class="card-text">{{ stats.total }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card good-card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Good Wafers</h5>
+                            <h2 class="card-text">{{ stats.good }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card bad-card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Bad Wafers</h5>
+                            <h2 class="card-text">{{ stats.bad }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Failure Rate</h5>
+                            <h2 class="card-text">{{ stats.percentage_bad }}%</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="plot-container">
+                        <div id="prediction-distribution"></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="plot-container">
+                        <div id="cluster-distribution"></div>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                var predictionGraph = {{ prediction_plot | safe }};
+                var clusterGraph = {{ cluster_plot | safe }};
+                Plotly.newPlot('prediction-distribution', predictionGraph.data, predictionGraph.layout);
+                Plotly.newPlot('cluster-distribution', clusterGraph.data, clusterGraph.layout);
+            </script>
+        {% else %}
+            <div class="alert alert-info">
+                <h4>No prediction data available yet</h4>
+                <p>Upload a CSV file with wafer data to start analyzing potential faults.</p>
+                <a href="/upload" class="btn btn-primary">Upload Data</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

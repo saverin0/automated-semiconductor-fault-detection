@@ -229,6 +229,10 @@ def export_bigquery_table_to_csv(
     try:
         if db_logger:
             db_logger.info(f"Exporting BigQuery table {project_id}.{dataset_id}.{table_id} to {destination_csv}")
+        
+        # Ensure the export directory exists
+        os.makedirs(os.path.dirname(destination_csv), exist_ok=True)
+        
         client = bigquery.Client(project=project_id, location=location)
         table_ref = f"{project_id}.{dataset_id}.{table_id}"
         query = f"SELECT * FROM `{table_ref}`"
@@ -247,18 +251,18 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     db_logger = logging.getLogger("db_process")
 
-    required_env_vars = ["GOOD_DIR", "BQ_PROJECT", "BQ_DATASET", "BQ_TABLE", "BQ_SCHEMA_JSON"]
+    required_env_vars = ["TRAINING_GOOD_DIR", "BQ_PROJECT", "BQ_DATASET", "BQ_TABLE_TRAINING", "BQ_SCHEMA_JSON_TRAINING"]
     missing_vars = [var for var in required_env_vars if not os.getenv(var)]
     if missing_vars:
         db_logger.error(f"Missing required environment variables: {', '.join(missing_vars)}")
         raise EnvironmentError(f"Missing required environment variables: {', '.join(missing_vars)}")
 
-    good_dir = os.getenv("GOOD_DIR")
+    good_dir = os.getenv("TRAINING_GOOD_DIR")
     project_id = os.getenv("BQ_PROJECT")
     dataset_id = os.getenv("BQ_DATASET")
-    table_id = os.getenv("BQ_TABLE")
+    table_id = os.getenv("BQ_TABLE_TRAINING")
     location = os.getenv("BQ_LOCATION", "US")
-    schema_json_path = os.getenv("BQ_SCHEMA_JSON")
+    schema_json_path = os.getenv("BQ_SCHEMA_JSON_TRAINING")
 
     schema, cleaned_col_map = load_bq_schema_from_json(schema_json_path, db_logger=db_logger)
 
@@ -266,6 +270,7 @@ if __name__ == "__main__":
         good_dir, project_id, dataset_id, table_id, schema, cleaned_col_map, location, db_logger=db_logger
     )
 
+    # Updated export path
     export_bigquery_table_to_csv(
-        project_id, dataset_id, table_id, "exported_data.csv", location, db_logger=db_logger
+        project_id, dataset_id, table_id, "src/exported_data_from_db/training_exported_data.csv", location, db_logger=db_logger
     )

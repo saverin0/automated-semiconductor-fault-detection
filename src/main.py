@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Dict
 from dotenv import load_dotenv
 from src.utils.path_utils import validate_env_path, ensure_path_exists
-from src import create_json_schema
-from src import data_validation
+from schema import create_json_schema
+from src.data_validation import training_data_validation
 from .data_ingestion.training_good_csv_to_db import (
     upload_good_csvs_to_bigquery,
     export_bigquery_table_to_csv,
@@ -18,7 +18,7 @@ from .data_ingestion.prediction_good_csv_to_db import (
     export_prediction_table_to_csv,
     load_bq_schema_from_json as load_prediction_schema
 )
-from .data_preprocessing.preprocessing import train_models
+from .data_preprocessing.training_data_preprocessing import train_models
 from .prediction.predictor import predict_from_bigquery_data
 import joblib
 from src.best_model_finder.tuner import Model_Finder
@@ -206,8 +206,8 @@ def run_data_validation(mode: str = "training") -> bool:
     main_logger.info("="*60)
 
     try:
-        validator_config = data_validation.setup_environment(mode)
-        validator = data_validation.FileValidator(validator_config)
+        validator_config = training_data_validation.setup_environment(mode)
+        validator = training_data_validation.FileValidator(validator_config)
         validator.setup_directories()
         validator.validate_files_parallel()
         validator.summary()

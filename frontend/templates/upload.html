@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Data | Semiconductor Fault Detection</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            padding-top: 20px;
+            background-color: #f5f5f5;
+        }
+        .upload-container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .file-input-zone {
+            border: 2px dashed #6c757d;
+            border-radius: 10px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .file-input-zone:hover {
+            border-color: #0d6efd;
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .file-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        .file-item {
+            border-left: 3px solid #0d6efd;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-item.invalid {
+            border-left-color: #dc3545;
+        }
+        .file-item .filename {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 80%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4 rounded">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/">Semiconductor Fault Detection</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/upload">Upload Data</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/results">Results</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="upload-container">
+                    <h2 class="mb-4">Upload Wafer Data</h2>
+                    <p class="text-muted mb-4">
+                        Upload a CSV file containing wafer sensor data for fault prediction. 
+                        The file should contain sensor readings and a 'wafer' column with wafer IDs.
+                    </p>
+                    
+                    <form method="post" enctype="multipart/form-data">
+                        <div class="file-input-zone mb-4" id="drop-area" onclick="document.getElementById('file').click()">
+                            <div class="file-input-content">
+                                <i class="bi bi-cloud-upload" style="font-size: 3rem;"></i>
+                                <h4 class="mt-3">Drag & Drop or Click to Upload</h4>
+                                <p class="text-muted">Upload one or more wafer CSV files</p>
+                                <p class="text-muted">Format: wafer_YYYYMMDD_HHMMSS.csv</p>
+                            </div>
+                            <input type="file" id="file" name="file" accept=".csv" multiple style="display: none;">
+                        </div>
+                        
+                        <!-- File preview section -->
+                        <div id="file-preview" class="mb-4" style="display: none;">
+                            <h5>Selected Files:</h5>
+                            <div id="file-list" class="file-list"></div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" id="upload-button" disabled>
+                                Process Files
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-4">
+                        <h5>Expected data format:</h5>
+                        <p>Your CSV should have:</p>
+                        <ul>
+                            <li>A 'wafer' column with unique IDs</li>
+                            <li>Sensor readings in columns named like 'sensor_X' or similar</li>
+                            <li>One row per wafer</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file');
+        const filePreview = document.getElementById('file-preview');
+        const fileList = document.getElementById('file-list');
+        const uploadButton = document.getElementById('upload-button');
+        const filenamePattern = new RegExp('^wafer_\\d{8}_\\d{6}\\.csv$');
+        
+        function updateFileList() {
+            fileList.innerHTML = '';
+            let validCount = 0;
+            
+            if (fileInput.files.length > 0) {
+                filePreview.style.display = 'block';
+                
+                for (const file of fileInput.files) {
+                    const isValid = filenamePattern.test(file.name);
+                    
+                    const fileItem = document.createElement('div');
+                    fileItem.className = `file-item ${isValid ? 'valid' : 'invalid'}`;
+                    
+                    fileItem.innerHTML = `
+                        <span class="filename">${file.name}</span>
+                        <span class="badge ${isValid ? 'bg-success' : 'bg-danger'}">
+                            ${isValid ? 'Valid' : 'Invalid name'}
+                        </span>
+                    `;
+                    
+                    fileList.appendChild(fileItem);
+                    
+                    if (isValid) validCount++;
+                }
+                
+                // Add summary
+                const summary = document.createElement('div');
+                summary.className = 'alert alert-info mt-3';
+                summary.textContent = `${validCount} of ${fileInput.files.length} files ready to upload`;
+                
+                if (validCount < fileInput.files.length) {
+                    const warning = document.createElement('div');
+                    warning.className = 'alert alert-warning mt-2';
+                    warning.innerHTML = 'Files must follow the pattern: <strong>wafer_YYYYMMDD_HHMMSS.csv</strong>';
+                    fileList.appendChild(warning);
+                }
+                
+                fileList.appendChild(summary);
+            } else {
+                filePreview.style.display = 'none';
+            }
+            
+            uploadButton.disabled = validCount === 0;
+            uploadButton.textContent = validCount > 0 ? `Process ${validCount} File${validCount > 1 ? 's' : ''}` : 'Process Files';
+        }
+        
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.style.borderColor = '#0d6efd';
+        });
+        
+        dropArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropArea.style.borderColor = '#6c757d';
+        });
+        
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.style.borderColor = '#6c757d';
+            
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                updateFileList();
+            }
+        });
+        
+        fileInput.addEventListener('change', updateFileList);
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+</body>
+</html>

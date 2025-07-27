@@ -8,9 +8,6 @@ __pycache__/
 # Environment variables
 .env
 
-# Google Cloud credentials
-*.json
-
 # VSCode settings (optional)
 .vscode/
 
@@ -20,7 +17,9 @@ logs/
 *.log.*
 
 # Data folders (optional, if you don't want to track data)
-data/
+- data/
++ data/
++ !data/**/*.csv
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
 # Temporary files
