@@ -16,10 +16,16 @@ logs/
 *.log
 *.log.*
 
-# Data folders (optional, if you don't want to track data)
-- data/
-+ data/
-+ !data/**/*.csv
+# # Data folders (optional, if you don't want to track data)
+# <<<<<<< sav_1
+# - data/
+# + data/
+# + !data/**/*.csv
+# =======
+# data/
+# # Ignore trained model directory
+# src/training_model/
+# >>>>>>> main
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
 # Temporary files
