@@ -96,9 +96,16 @@ def upload_good_csvs_to_bigquery(
         if db_logger:
             db_logger.info("Starting upload_good_csvs_to_bigquery process.")
         source_creds, _ = google.auth.default(scopes=['https://www.googleapis.com/auth/cloud-platform'])
+        target_principal = os.getenv("BIGQUERY_SERVICE_ACCOUNT")
+        if not target_principal:
+            msg = "Environment variable BIGQUERY_SERVICE_ACCOUNT is not set"
+            if db_logger:
+                db_logger.error(msg)
+            raise EnvironmentError(msg)
+
         target_creds = impersonated_credentials.Credentials(
             source_credentials=source_creds,
-            target_principal="bigquery-uploader-2@machine-learning-461308.iam.gserviceaccount.com",  # <-- update here
+            target_principal=target_principal,
             target_scopes=[
                 'https://www.googleapis.com/auth/bigquery',
                 'https://www.googleapis.com/auth/cloud-platform'
@@ -255,7 +262,14 @@ def upload_training_data():
     db_logger = logging.getLogger("db_process")
 
     try:
-        required_env_vars = ["TRAINING_GOOD_DIR", "BQ_PROJECT", "BQ_DATASET", "BQ_TABLE_TRAINING", "BQ_SCHEMA_JSON_TRAINING"]
+        required_env_vars = [
+            "TRAINING_GOOD_DIR",
+            "BQ_PROJECT",
+            "BQ_DATASET",
+            "BQ_TABLE_TRAINING",
+            "BQ_SCHEMA_JSON_TRAINING",
+            "BIGQUERY_SERVICE_ACCOUNT",
+        ]
         missing_vars = [var for var in required_env_vars if not os.getenv(var)]
         if missing_vars:
             db_logger.error(f"Missing required environment variables: {', '.join(missing_vars)}")

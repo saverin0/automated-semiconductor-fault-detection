@@ -10,6 +10,7 @@ from sklearn.cluster import KMeans
 import glob
 from datetime import datetime
 from dotenv import load_dotenv
+import hashlib
 
 # Load environment variables
 load_dotenv()
@@ -32,6 +33,7 @@ class ModelPredictor:
         self.models = {}
         self.imputer = None
         self.clusterer = None
+        self.expected_hashes = {}  # Store expected hashes for model files
         self.load_models()
     
     def load_models(self):

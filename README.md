@@ -95,6 +95,8 @@ UPLOAD_FOLDER=uploads
 RESULTS_DIR=prediction_results
 ```
 
+`FLASK_SECRET_KEY` is required. If it is missing the web application will abort during startup.
+
 ### Security Warnings
 
 - Never use hard-coded secrets in production. Always use environment variables.
