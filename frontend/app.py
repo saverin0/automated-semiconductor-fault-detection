@@ -20,10 +20,9 @@ warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-
-
 # Import prediction functionality
 from src.model_testing.test_predict_data import ModelPredictor, setup_logger
+from src.utils.performance_monitor import monitor_performance
 
 # Define the cleanup function here (before it's used)
 def cleanup_old_files(folder_path, max_files=20):
@@ -40,7 +39,11 @@ def cleanup_old_files(folder_path, max_files=20):
         return 0
 
 app = Flask(__name__)
-app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default-insecure-key')
+# Ensure FLASK_SECRET_KEY is set for security
+secret_key = os.getenv('FLASK_SECRET_KEY')
+if not secret_key:
+    raise RuntimeError("FLASK_SECRET_KEY environment variable must be set for security")
+app.secret_key = secret_key
 
 # Initialize model predictor
 MODEL_DIR = os.getenv('MODEL_SAVE_DIR', 'training_model')
@@ -53,6 +56,28 @@ logger = setup_logger()
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(RESULTS_FOLDER, exist_ok=True)
 
+# Validate model directory exists and contains expected files
+def validate_model_directory(model_dir):
+    """Validate that the model directory contains expected model files."""
+    if not os.path.exists(model_dir):
+        raise RuntimeError(f"Model directory {model_dir} does not exist")
+    
+    expected_files = ['kmeans_clusterer.joblib']
+    for i in range(3):  # Expect cluster models 0, 1, 2
+        expected_files.append(f'model_cluster_{i}_DecisionTree.joblib')
+        expected_files.append(f'model_cluster_{i}_RandomForest.joblib')
+        expected_files.append(f'model_cluster_{i}_GradientBoosting.joblib')
+    
+    missing_files = []
+    for file in expected_files:
+        if not os.path.exists(os.path.join(model_dir, file)):
+            missing_files.append(file)
+    
+    if missing_files:
+        logger.warning(f"Missing expected model files: {missing_files}")
+    
+    return len(missing_files) == 0
+
 # Now you can call the function
 deleted_uploads = cleanup_old_files(UPLOAD_FOLDER, 20)
 deleted_results = cleanup_old_files(RESULTS_FOLDER, 20)
@@ -62,6 +87,8 @@ if deleted_uploads or deleted_results:
 predictor = None
 
 try:
+    # Validate model directory before loading
+    validate_model_directory(MODEL_DIR)
     predictor = ModelPredictor(model_dir=MODEL_DIR, logger=logger)
     logger.info("Model predictor initialized successfully")
 except Exception as e:
@@ -86,10 +113,20 @@ def is_safe_filename(filename):
     # Only allow .csv files in results
     if not filename.lower().endswith('.csv'):
         return False
+    
+    # Additional security checks
+    # Prevent null bytes and other dangerous characters
+    if '\x00' in filename or any(char in filename for char in ['<', '>', ':', '"', '|', '?', '*']):
+        return False
         
-    # Optionally, enforce a stricter pattern if needed
-    # if not re.match(r'^prediction_results_\d{8}_\d{6}_wafer_\d{8}_\d{6}\.csv$', filename):
-    #    return False
+    # Limit filename length
+    if len(filename) > 255:
+        return False
+        
+    # Only allow alphanumeric, dots, underscores, and hyphens
+    import re
+    if not re.match(r'^[a-zA-Z0-9._-]+\.csv$', filename):
+        return False
         
     return True
 
@@ -135,6 +172,7 @@ def index():
     return render_template('index.html', stats=prediction_stats, has_data=False)
 
 @app.route('/upload', methods=['GET', 'POST'])
+@monitor_performance("File Upload and Processing")
 def upload():
     """Upload page for new prediction data"""
     if request.method == 'POST':
@@ -376,48 +414,14 @@ def api_results(filename):
             'message': str(e)
         }), 500
 
-# def preprocess_prediction_data(self, df):
-#     """Preprocess prediction data similar to training preprocessing."""
-#     # Always treat the first column as wafer ID
-#     wafer_ids = df.iloc[:, 0].copy()
-#     df_features = df.iloc[:, 1:].copy()
-    
-#     # More comprehensive standardization function
-#     def standardize_column_name(col):
-#         col = str(col).lower()
-#         col = col.replace('-', '_')
-#         col = col.replace(' ', '_')
-#         col = col.replace('.', '_')
-#         col = re.sub(r'[^\w]', '_', col)  # Replace any non-alphanumeric chars
-#         return col
-    
-#     # Get model features
-#     model_features = self.get_model_features()
-    
-#     if self.logger:
-#         self.logger.info(f"Input columns: {df_features.shape[1]}, Model features: {len(model_features)}")
-    
-#     # Create DataFrame with exactly the columns the model expects
-#     aligned_df = pd.DataFrame(index=df.index, columns=model_features)
-    
-#     # Fill values from input by position (not name), and fill missing with NaN
-#     for i, col in enumerate(model_features):
-#         if i < df_features.shape[1]:
-#             aligned_df.iloc[:, i] = df_features.iloc[:, i].values
-#         else:
-#             # Fill missing columns with NaN
-#             aligned_df.iloc[:, i] = np.nan
-    
-#     if self.logger:
-#         self.logger.info(f"Aligned DataFrame shape: {aligned_df.shape}")
-#         missing_count = aligned_df.isna().sum().sum()
-#         self.logger.info(f"Missing values to be imputed: {missing_count}")
-    
-#     return aligned_df, wafer_ids
-
 if __name__ == '__main__':
     # Load debug mode, host, and port from environment variables
     debug_mode = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
     host = os.getenv('FLASK_HOST', '0.0.0.0')
     port = int(os.getenv('FLASK_PORT', '5001'))
+    
+    # Security check: warn if debug mode is enabled
+    if debug_mode:
+        logger.warning("⚠️  SECURITY WARNING: Debug mode is enabled. This should be disabled in production.")
+    
     app.run(debug=debug_mode, host=host, port=port)

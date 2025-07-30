@@ -44,8 +44,20 @@ class KMeansClustering:
             wcss.append(kmeans.inertia_)
             logger.info(f"Clusters: {i}, WCSS: {kmeans.inertia_:.2f}")
         logger.info(f"Elbow plot WCSS values: {wcss}")
-        # For demonstration, just return 3 or implement your own elbow logic
-        optimal_clusters = 3
+        
+        # Implement elbow method: find the point where adding clusters doesn't help much
+        if len(wcss) < 3:
+            optimal_clusters = min(3, len(wcss))
+        else:
+            # Calculate the rate of change in WCSS
+            wcss_diff = np.diff(wcss)
+            wcss_diff_ratio = np.diff(wcss_diff)
+            
+            # Find the elbow point (where the rate of change starts to level off)
+            # Look for the point where the second derivative is minimized
+            elbow_idx = np.argmin(wcss_diff_ratio) + 2  # +2 because we took two diffs
+            optimal_clusters = max(2, min(elbow_idx, max_clusters))
+        
         logger.info(f"Optimal number of clusters selected: {optimal_clusters}")
         logger.info("Elbow plot completed.")
         return optimal_clusters

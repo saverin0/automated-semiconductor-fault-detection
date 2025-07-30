@@ -10,7 +10,7 @@ from sklearn.cluster import KMeans
 import glob
 from datetime import datetime
 from dotenv import load_dotenv
-import hashlib
+from typing import Dict, List, Optional, Tuple, Union
 
 # Load environment variables
 load_dotenv()
@@ -19,7 +19,8 @@ load_dotenv()
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.utils.logging_utils import setup_logger as create_logger, get_log_file_path, get_file_path, get_dir_path
+from src.utils.logging_utils import setup_logger as create_logger
+from src.utils.performance_monitor import monitor_performance
 
 def setup_logger():
     """Set up a logger with both console and file output."""
@@ -33,9 +34,9 @@ class ModelPredictor:
         self.models = {}
         self.imputer = None
         self.clusterer = None
-        self.expected_hashes = {}  # Store expected hashes for model files
         self.load_models()
     
+    @monitor_performance("Model Loading")
     def load_models(self):
         """Load all trained models from the model directory."""
         if not os.path.exists(self.model_dir):
@@ -47,12 +48,36 @@ class ModelPredictor:
             raise FileNotFoundError(f"No model files found in {self.model_dir}")
         
         for model_file in model_files:
-            # Extract cluster number from filename
-            filename = os.path.basename(model_file)
-            # Expected format: model_cluster_0_RandomForest.joblib
-            parts = filename.split('_')
-            if len(parts) >= 3:
-                cluster_id = int(parts[2])
+            try:
+                # Validate file exists and is readable
+                if not os.path.isfile(model_file):
+                    if self.logger:
+                        self.logger.warning(f"Skipping non-file: {model_file}")
+                    continue
+                
+                # Extract cluster number from filename
+                filename = os.path.basename(model_file)
+                # Expected format: model_cluster_0_RandomForest.joblib
+                parts = filename.split('_')
+                if len(parts) < 3:
+                    if self.logger:
+                        self.logger.warning(f"Invalid model filename format: {filename}")
+                    continue
+                
+                try:
+                    cluster_id = int(parts[2])
+                except ValueError:
+                    if self.logger:
+                        self.logger.warning(f"Invalid cluster ID in filename: {filename}")
+                    continue
+                
+                # Validate file size (basic integrity check)
+                file_size = os.path.getsize(model_file)
+                if file_size < 100:  # Suspiciously small file
+                    if self.logger:
+                        self.logger.warning(f"Suspiciously small model file: {filename} ({file_size} bytes)")
+                    continue
+                
                 # WARNING: Deserializing models with joblib.load can be unsafe. Only load trusted files.
                 model = joblib.load(model_file)
                 self.models[cluster_id] = model
@@ -73,14 +98,23 @@ class ModelPredictor:
                         'feature': X_columns,
                         'importance': model.feature_importances_
                     }).sort_values('importance', ascending=False)
-                    self.logger.info(f"Top features for cluster {cluster_id}:")
-                    self.logger.info(importance.head(10).to_string(index=False))
+                    if self.logger:
+                        self.logger.info(f"Top features for cluster {cluster_id}:")
+                        self.logger.info(importance.head(10).to_string(index=False))
+                        
+            except Exception as e:
+                if self.logger:
+                    self.logger.error(f"Failed to load model {model_file}: {e}")
+                continue
+        
+        if not self.models:
+            raise RuntimeError("No valid models were loaded")
         
         if self.logger:
             self.logger.info(f"Total models loaded: {len(self.models)}")
             self.logger.info(f"Available clusters: {list(self.models.keys())}")
 
-    def preprocess_prediction_data(self, df):
+    def preprocess_prediction_data(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series]:
         """Preprocess prediction data similar to training preprocessing."""
         if self.logger:
             self.logger.info(f"🔍 BACKEND: Received DataFrame shape: {df.shape}")
@@ -144,7 +178,7 @@ class ModelPredictor:
     
         return aligned_df, wafer_ids
 
-    def handle_problematic_columns(self, X):
+    def handle_problematic_columns(self, X: pd.DataFrame) -> pd.DataFrame:
         """Attempt to fix problematic columns before imputation."""
         if self.logger:
             self.logger.info("🔧 ATTEMPTING AUTOMATIC DATA REPAIR...")
@@ -198,7 +232,8 @@ class ModelPredictor:
         
         return X
 
-    def impute_missing_values(self, X):
+    @monitor_performance("Data Imputation")
+    def impute_missing_values(self, X: pd.DataFrame) -> pd.DataFrame:
         """Impute missing values in prediction data."""
         if self.logger:
             null_counts = X.isnull().sum()
@@ -342,9 +377,21 @@ class ModelPredictor:
                 self.logger.error(f"❌ IMPUTATION ERROR: {e}")
                 self.logger.error(f"🔍 IMPUTATION: Input shape was: {X.shape}")
                 self.logger.error(f"🔍 IMPUTATION: Input columns were: {len(X.columns)}")
-            raise
+                self.logger.error(f"🔍 IMPUTATION: Error type: {type(e).__name__}")
+                import traceback
+                self.logger.error(f"🔍 IMPUTATION: Full traceback: {traceback.format_exc()}")
+            
+            # Provide more specific error handling
+            if isinstance(e, ValueError):
+                raise ValueError(f"Data validation error during imputation: {e}")
+            elif isinstance(e, MemoryError):
+                raise MemoryError(f"Insufficient memory for imputation with shape {X.shape}")
+            elif isinstance(e, ImportError):
+                raise ImportError(f"Missing required dependency for imputation: {e}")
+            else:
+                raise RuntimeError(f"Unexpected error during imputation: {e}")
 
-    def assign_clusters(self, X):
+    def assign_clusters(self, X: pd.DataFrame) -> np.ndarray:
         """Assign prediction data to clusters."""
         if self.logger:
             self.logger.info(f"🔍 CLUSTERING: Input shape: {X.shape}")
@@ -376,7 +423,8 @@ class ModelPredictor:
             self.logger.warning("⚠️ CLUSTERING: Fallback - Assigning all samples to cluster 0")
             return np.zeros(len(X))
 
-    def predict(self, df):
+    @monitor_performance("Model Prediction")
+    def predict(self, df: pd.DataFrame) -> pd.DataFrame:
         """Make predictions on new data."""
         # Add timestamp at the start of prediction
         processing_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
@@ -442,7 +490,7 @@ class ModelPredictor:
         
         return results
 
-    def get_model_features(self):
+    def get_model_features(self) -> List[str]:
         """Return the list of features expected by the models."""
         model_features = []
         for model in self.models.values():
@@ -457,7 +505,7 @@ class ModelPredictor:
         
         return model_features
 
-def test_on_prediction_data(prediction_file=None, model_dir=None, output_file=None):
+def test_on_prediction_data(prediction_file: Optional[str] = None, model_dir: Optional[str] = None, output_file: Optional[str] = None) -> pd.DataFrame:
     """Test trained models on prediction data."""
     logger = setup_logger()
     

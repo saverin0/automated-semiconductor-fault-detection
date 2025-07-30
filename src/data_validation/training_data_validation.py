@@ -361,8 +361,8 @@ class FileValidator:
                 self._accept_file(entry, file_sha256)
 
         except Exception as e:
-            self.logger.error(f"Processing error for {entry.name}: {str(e)}", exc_info=True)
-            self._reject_file(entry, f"Processing error: {str(e)}")
+            self.logger.error(f"Error: {e}")
+            return False
         finally:
             elapsed = time.time() - start_time
             self.logger.debug(f"Processed {entry.name} in {elapsed:.3f}s")

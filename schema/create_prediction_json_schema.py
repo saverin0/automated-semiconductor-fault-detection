@@ -1,5 +1,8 @@
 import json
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 def generate_prediction_schema(
     output_path: str,
@@ -18,10 +21,12 @@ def generate_prediction_schema(
     # Add Sensor columns
     for i in range(1, num_columns):
         schema["ColName"][f"Sensor - {i}"] = "float"
-    # Write to file
-    with open(output_path, "w") as f:
-        json.dump(schema, f, indent=4)
-    print(f"Prediction schema saved to {output_path}")
+    # Save the schema to a JSON file
+    with open(output_path, 'w') as f:
+        json.dump(schema, f, indent=2)
+    
+    logger.info(f"Prediction schema saved to {output_path}")
+    return 0
 
 if __name__ == "__main__":
     # Example usage

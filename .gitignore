@@ -3,7 +3,8 @@
 # Python
 __pycache__/
 *.pyc
-
+*.pyo
+*.pyd
 
 # Environment variables
 .env
@@ -11,54 +12,47 @@ __pycache__/
 # VSCode settings (optional)
 .vscode/
 
-# Logs (optional)
+# Logs
 logs/
 *.log
 *.log.*
 
 # Data folders (optional, if you don't want to track data)
-- data/
-+ data/
-+ !data/**/*.csv
+data/
+!data/**/*.csv
+
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
+
 # Temporary files
 *.tmp
-# Backup files
 *.bak
-# MacOS specific
+
+# OS specific
 .DS_Store
-# Windows specific
 Thumbs.db
+
 # IDE specific
 .idea/
+
 # Python virtual environment
 venv/
-# Jupyter Notebook specific
-.ipynb_checkpoints/
 
 # Coverage reports
 .coverage
-# Pytest cache
 .pytest_cache/
-# PyCharm specific
-.idea/
-# Local configuration files
-*.local
+
 # Build directories
 build/
-# Distribution directories
 dist/
+
 # Cython debug symbols
 cython_debug/
-# PyInstaller
-# PyInstaller specific
-# PyInstaller creates a build folder and a dist folder
-# which are not needed in version control
-# PyInstaller specific
 
-# Byte-compiled / optimized / DLL files
+# PyInstaller
 *.egg-info/
+
+# Model and data files
 *.pkl
 *.h5
 *.db
