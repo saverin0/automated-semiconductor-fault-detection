@@ -214,6 +214,14 @@ Before deploying this application to production, ensure you have completed the f
    ```
 
 3. **Set up environment variables:**
+   
+   **Option A: Use the provided template (Recommended)**
+   ```bash
+   cp .env.example .env
+   ```
+   Then edit `.env` and set your actual values, especially `FLASK_SECRET_KEY`.
+
+   **Option B: Create manually**
    Create a `.env` file in the project root with the following keys:
 
    ```
@@ -221,14 +229,15 @@ Before deploying this application to production, ensure you have completed the f
    FLASK_DEBUG=False
    FLASK_HOST=0.0.0.0
    FLASK_PORT=5001
-   GOOGLE_APPLICATION_CREDENTIALS=/path/to/service_account.json
-   BIGQUERY_SERVICE_ACCOUNT=your-service-account@project-id.iam.gserviceaccount.com
    MODEL_SAVE_DIR=training_model
    UPLOAD_FOLDER=uploads
    RESULTS_DIR=prediction_results
    ```
 
-   **Important:** `FLASK_SECRET_KEY` is required. If it is missing, the web application will abort during startup.
+   **Important:** 
+   - `FLASK_SECRET_KEY` is required. If it is missing, the web application will abort during startup.
+   - Generate a secure key: `python -c "import secrets; print(secrets.token_hex(32))"`
+   - Never commit your `.env` file to version control (it's already in `.gitignore`)
 
 4. **Run the web application:**
    ```bash
