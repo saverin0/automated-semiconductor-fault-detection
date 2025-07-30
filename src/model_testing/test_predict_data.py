@@ -51,6 +51,7 @@ class ModelPredictor:
             parts = filename.split('_')
             if len(parts) >= 3:
                 cluster_id = int(parts[2])
+                # WARNING: Deserializing models with joblib.load can be unsafe. Only load trusted files.
                 model = joblib.load(model_file)
                 self.models[cluster_id] = model
                 if self.logger:
@@ -79,12 +80,35 @@ class ModelPredictor:
 
     def preprocess_prediction_data(self, df):
         """Preprocess prediction data similar to training preprocessing."""
+        if self.logger:
+            self.logger.info(f"🔍 BACKEND: Received DataFrame shape: {df.shape}")
+            self.logger.info(f"🔍 BACKEND: Received columns (first 5): {list(df.columns[:5])}")
+            self.logger.info(f"🔍 BACKEND: Received columns (last 5): {list(df.columns[-5:])}")
+        
         # Always treat the first column as wafer ID
         wafer_ids = df.iloc[:, 0].copy()
         df_features = df.iloc[:, 1:].copy()
         
+        if self.logger:
+            self.logger.info(f"🔍 BACKEND: After splitting - wafer_ids shape: {wafer_ids.shape}")
+            self.logger.info(f"🔍 BACKEND: After splitting - features shape: {df_features.shape}")
+        
+        # STRICT VALIDATION: Must have exactly 590 feature columns (591 total - 1 wafer column)
+        EXPECTED_FEATURE_COLUMNS = 590
+        if df_features.shape[1] != EXPECTED_FEATURE_COLUMNS:
+            error_msg = f"❌ BACKEND REJECTION: Expected {EXPECTED_FEATURE_COLUMNS} feature columns but got {df_features.shape[1]}. Input had {df.shape[1]} total columns. Cannot proceed with prediction on incomplete data."
+            if self.logger:
+                self.logger.error(error_msg)
+                self.logger.error(f"🔍 BACKEND: Original DataFrame shape: {df.shape}")
+                self.logger.error(f"🔍 BACKEND: Features after wafer removal: {df_features.shape}")
+            raise ValueError(error_msg)
+        
         # Standardize column names: lowercase and replace dashes with underscores
+        original_feature_columns = df_features.columns.tolist()
         df_features.columns = [col.lower().replace('-', '_') for col in df_features.columns]
+        
+        if self.logger:
+            self.logger.info(f"🔍 BACKEND: Column standardization - before: {len(original_feature_columns)}, after: {len(df_features.columns)}")
         
         # Get expected feature columns from the model
         model_features = []
@@ -96,71 +120,258 @@ class ModelPredictor:
                 break
     
         if self.logger:
-            self.logger.info(f"Input columns: {len(df_features.columns)}, Model features: {len(model_features)}")
+            self.logger.info(f"✅ BACKEND: Feature validation passed: {len(df_features.columns)} input features match expected {len(model_features)} model features")
         
-        # Create empty DataFrame with the EXACT columns expected by the model
+        # STRICT MAPPING: Use exact positional mapping, no padding with NaN
+        if len(df_features.columns) != len(model_features):
+            error_msg = f"❌ BACKEND ALIGNMENT ERROR: Feature count mismatch. Input: {len(df_features.columns)}, Model expects: {len(model_features)}"
+            if self.logger:
+                self.logger.error(error_msg)
+            raise ValueError(error_msg)
+        
+        # Create DataFrame with the EXACT columns expected by the model
         aligned_df = pd.DataFrame(index=df.index, columns=model_features)
     
-        # Fill with values from the input DataFrame where possible, by position not name
+        # Fill with values from the input DataFrame by position (1:1 mapping)
         for i, col in enumerate(model_features):
-            if i < df_features.shape[1]:
-                aligned_df[col] = df_features.iloc[:, i].values
-            else:
-                aligned_df[col] = np.nan
+            aligned_df[col] = df_features.iloc[:, i].values
     
         if self.logger:
-            self.logger.info(f"Aligned DataFrame shape: {aligned_df.shape}")
-            missing_count = aligned_df.isna().sum().sum()
-            self.logger.info(f"Missing values to be imputed: {missing_count}")
+            self.logger.info(f"✅ BACKEND: Feature alignment successful: {aligned_df.shape}")
+            self.logger.info(f"🔍 BACKEND: Aligned DataFrame columns: {len(aligned_df.columns)}")
     
         return aligned_df, wafer_ids
+
+    def handle_problematic_columns(self, X):
+        """Attempt to fix problematic columns before imputation."""
+        if self.logger:
+            self.logger.info("🔧 ATTEMPTING AUTOMATIC DATA REPAIR...")
+        
+        fixed_issues = []
+        
+        # 1. Fix zero-variance columns by adding small random noise
+        zero_var_cols = []
+        for col in X.columns:
+            if X[col].var() == 0:
+                original_val = X[col].iloc[0] if not X[col].isnull().all() else 0
+                # Add tiny random noise (0.1% of value or 0.001 if value is 0)
+                noise_scale = max(abs(original_val) * 0.001, 0.001)
+                X[col] = original_val + np.random.normal(0, noise_scale, len(X))
+                zero_var_cols.append(col)
+        
+        if zero_var_cols:
+            fixed_issues.append(f"Added variance to {len(zero_var_cols)} zero-variance columns")
+            if self.logger:
+                self.logger.info(f"🔧 Fixed {len(zero_var_cols)} zero-variance columns by adding small noise")
+        
+        # 2. Fix all-NaN columns by filling with column median from available data
+        # If no data available, use 0 as fallback
+        all_nan_cols = X.columns[X.isnull().all()].tolist()
+        for col in all_nan_cols:
+            # Try to use overall dataset median, fallback to 0
+            X[col] = 0  # Simple fallback - could be enhanced with training data statistics
+        
+        if all_nan_cols:
+            fixed_issues.append(f"Filled {len(all_nan_cols)} all-NaN columns with fallback values")
+            if self.logger:
+                self.logger.info(f"🔧 Fixed {len(all_nan_cols)} all-NaN columns with fallback values")
+        
+        # 3. Handle extremely sparse columns (>95% missing) by forward/backward fill + median
+        sparse_cols = []
+        for col in X.columns:
+            missing_pct = (X[col].isnull().sum() / len(X)) * 100
+            if missing_pct > 95:
+                # Forward fill, then backward fill, then median fill
+                X[col] = X[col].fillna(method='ffill').fillna(method='bfill').fillna(X[col].median()).fillna(0)
+                sparse_cols.append(col)
+        
+        if sparse_cols:
+            fixed_issues.append(f"Repaired {len(sparse_cols)} extremely sparse columns")
+            if self.logger:
+                self.logger.info(f"🔧 Repaired {len(sparse_cols)} extremely sparse columns")
+        
+        if fixed_issues:
+            if self.logger:
+                self.logger.info(f"✅ DATA REPAIR COMPLETED: {'; '.join(fixed_issues)}")
+        
+        return X
 
     def impute_missing_values(self, X):
         """Impute missing values in prediction data."""
         if self.logger:
             null_counts = X.isnull().sum()
             total_nulls = null_counts.sum()
-            self.logger.info(f"Total missing values before imputation: {total_nulls}")
+            self.logger.info(f"🔍 IMPUTATION: Input shape: {X.shape}")
+            self.logger.info(f"🔍 IMPUTATION: Total missing values before imputation: {total_nulls}")
+            self.logger.info(f"🔍 IMPUTATION: Input columns count: {len(X.columns)}")
 
-        if self.imputer is None:
-            self.imputer = KNNImputer()
-            data_imputed = self.imputer.fit_transform(X)  # <-- use X here
+        try:
+            # Comprehensive data quality analysis before imputation
+            original_columns = X.columns.tolist()
+            issues = []
+            
+            # 1. Check for columns with zero variance (constant values)
+            zero_var_cols = []
+            for col in X.columns:
+                if X[col].var() == 0:
+                    unique_vals = X[col].dropna().unique()
+                    zero_var_cols.append(f"{col} (constant value: {unique_vals[0] if len(unique_vals) > 0 else 'N/A'})")
+            
+            if zero_var_cols:
+                issues.append(f"Zero-variance columns ({len(zero_var_cols)}): {zero_var_cols[:3]}{'...' if len(zero_var_cols) > 3 else ''}")
+                if self.logger:
+                    self.logger.warning(f"🚨 Found {len(zero_var_cols)} zero-variance columns (constant values)")
+            
+            # 2. Check for columns that are all NaN
+            all_nan_cols = X.columns[X.isnull().all()].tolist()
+            if all_nan_cols:
+                issues.append(f"All-NaN columns ({len(all_nan_cols)}): {all_nan_cols[:3]}{'...' if len(all_nan_cols) > 3 else ''}")
+                if self.logger:
+                    self.logger.warning(f"🚨 Found {len(all_nan_cols)} all-NaN columns")
+            
+            # 3. Check for columns with very high missing percentage (>95%)
+            high_missing_cols = []
+            for col in X.columns:
+                missing_pct = (X[col].isnull().sum() / len(X)) * 100
+                if missing_pct > 95:
+                    high_missing_cols.append(f"{col} ({missing_pct:.1f}% missing)")
+            
+            if high_missing_cols:
+                issues.append(f"Extremely sparse columns (>95% missing) ({len(high_missing_cols)}): {high_missing_cols[:3]}{'...' if len(high_missing_cols) > 3 else ''}")
+                if self.logger:
+                    self.logger.warning(f"🚨 Found {len(high_missing_cols)} extremely sparse columns")
+            
+            # 4. Check for columns with infinite values
+            inf_cols = []
+            for col in X.columns:
+                if X[col].dtype in ['float64', 'float32', 'int64', 'int32']:
+                    if np.isinf(X[col]).any():
+                        inf_count = np.isinf(X[col]).sum()
+                        inf_cols.append(f"{col} ({inf_count} infinite values)")
+            
+            if inf_cols:
+                issues.append(f"Columns with infinite values ({len(inf_cols)}): {inf_cols[:3]}{'...' if len(inf_cols) > 3 else ''}")
+                if self.logger:
+                    self.logger.warning(f"🚨 Found {len(inf_cols)} columns with infinite values")
+            
+            # 5. Check for non-numeric columns
+            non_numeric_cols = []
+            for col in X.columns:
+                if X[col].dtype == 'object' or X[col].dtype == 'string':
+                    non_numeric_cols.append(f"{col} (dtype: {X[col].dtype})")
+            
+            if non_numeric_cols:
+                issues.append(f"Non-numeric columns ({len(non_numeric_cols)}): {non_numeric_cols[:3]}{'...' if len(non_numeric_cols) > 3 else ''}")
+                if self.logger:
+                    self.logger.warning(f"🚨 Found {len(non_numeric_cols)} non-numeric columns")
+            
+            # ATTEMPT AUTOMATIC REPAIR IF ISSUES DETECTED
+            if issues:
+                if self.logger:
+                    self.logger.warning("🔧 Data quality issues detected - attempting automatic repair...")
+                X = self.handle_problematic_columns(X)
+                
+            # Apply KNNImputer
+            imputer = KNNImputer()
+            data_imputed = imputer.fit_transform(X)
+            
             if self.logger:
-                self.logger.info("Created and fitted new KNNImputer for prediction data.")
-        else:
-            data_imputed = self.imputer.transform(X)  # <-- use X here
+                self.logger.info(f"🔍 IMPUTATION: KNNImputer output shape: {data_imputed.shape}")
+                
+            # CRITICAL FIX: If KNNImputer still dropped columns after repair, provide detailed explanation
+            if data_imputed.shape[1] != len(original_columns):
+                dropped_count = len(original_columns) - data_imputed.shape[1]
+                
+                # Create detailed error message
+                error_details = [
+                    f"❌ CRITICAL IMPUTATION ERROR: KNNImputer dropped {dropped_count} columns even after automatic repair!",
+                    f"📊 Input columns: {len(original_columns)} → Output columns: {data_imputed.shape[1]}",
+                    "",
+                    "🔍 ORIGINAL ISSUES DETECTED:",
+                ]
+                
+                if issues:
+                    for i, issue in enumerate(issues, 1):
+                        error_details.append(f"   {i}. {issue}")
+                else:
+                    error_details.append("   • No obvious data quality issues detected")
+                    error_details.append("   • KNNImputer may have detected subtle numerical issues")
+                
+                error_details.extend([
+                    "",
+                    "⚠️  AUTOMATIC REPAIR ATTEMPTED BUT FAILED",
+                    "   • Tried to fix zero-variance columns with noise injection",
+                    "   • Tried to fill all-NaN columns with fallback values",
+                    "   • Tried to repair sparse columns with forward/backward fill",
+                    "",
+                    "💡 THIS FILE HAS SEVERE DATA QUALITY ISSUES:",
+                    "   • Too many sensors with identical readings (stuck/faulty)",
+                    "   • Too much missing sensor data", 
+                    "   • Data corruption or formatting problems",
+                    "",
+                    "🔧 MANUAL SOLUTION REQUIRED:",
+                    "   • Check sensor calibration and functionality",
+                    "   • Verify data collection process",
+                    "   • Consider re-collecting this wafer data",
+                    "   • Ensure all 590 sensors are functioning properly"
+                ])
+                
+                error_msg = "\n".join(error_details)
+                
+                if self.logger:
+                    self.logger.error(error_msg)
+                raise ValueError(error_msg)
+                
             if self.logger:
-                self.logger.info("Used pre-trained imputer for prediction data.")
+                self.logger.info("✅ IMPUTATION: KNNImputer preserved all columns successfully")
 
-        X = pd.DataFrame(data_imputed, columns=X.columns, index=X.index)
+            # Ensure the DataFrame maintains the exact same structure
+            X_imputed = pd.DataFrame(data_imputed, columns=original_columns, index=X.index)
 
-        if self.logger:
-            self.logger.info(f"Missing values after imputation: {X.isnull().sum().sum()}")
+            if self.logger:
+                self.logger.info(f"✅ IMPUTATION: Final imputed DataFrame shape: {X_imputed.shape}")
+                self.logger.info(f"🔍 IMPUTATION: Final columns count: {len(X_imputed.columns)}")
+                self.logger.info(f"✅ IMPUTATION: Missing values after imputation: {X_imputed.isnull().sum().sum()}")
 
-        return X
+            return X_imputed
+            
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"❌ IMPUTATION ERROR: {e}")
+                self.logger.error(f"🔍 IMPUTATION: Input shape was: {X.shape}")
+                self.logger.error(f"🔍 IMPUTATION: Input columns were: {len(X.columns)}")
+            raise
 
     def assign_clusters(self, X):
         """Assign prediction data to clusters."""
+        if self.logger:
+            self.logger.info(f"🔍 CLUSTERING: Input shape: {X.shape}")
+            self.logger.info(f"🔍 CLUSTERING: Input columns count: {len(X.columns)}")
+            
         try:
             # LOAD the clusterer that was saved during training
             clusterer_file = os.getenv('KMEANS_CLUSTERER_FILE', 'kmeans_clusterer.joblib')
             clusterer_path = os.path.join(self.model_dir, clusterer_file)
             if os.path.exists(clusterer_path):
+                # WARNING: Deserializing models with joblib.load can be unsafe. Only load trusted files.
                 self.clusterer = joblib.load(clusterer_path)
-                self.logger.info(f"Loaded clusterer from {clusterer_path}")
+                self.logger.info(f"✅ CLUSTERING: Loaded clusterer from {clusterer_path}")
                 clusters = self.clusterer.predict(X)
+                if self.logger:
+                    self.logger.info(f"✅ CLUSTERING: Cluster assignment successful: {len(clusters)} assignments")
             else:
                 # Fallback to creating a new one
-                self.logger.warning("No saved clusterer found! Creating new one (less accurate)")
+                self.logger.warning("⚠️ CLUSTERING: No saved clusterer found! Creating new one (less accurate)")
                 num_clusters = len(self.models)
                 self.clusterer = KMeans(n_clusters=num_clusters, random_state=42)
                 clusters = self.clusterer.fit_predict(X)
                 
             return clusters
         except Exception as e:
-            self.logger.error(f"Error in cluster assignment: {e}")
+            self.logger.error(f"❌ CLUSTERING ERROR: {e}")
+            self.logger.error(f"🔍 CLUSTERING: Input shape was: {X.shape}")
             # Fallback to assigning all to cluster 0
-            self.logger.warning("Fallback: Assigning all samples to cluster 0")
+            self.logger.warning("⚠️ CLUSTERING: Fallback - Assigning all samples to cluster 0")
             return np.zeros(len(X))
 
     def predict(self, df):

@@ -127,7 +127,14 @@ def upload_good_csvs_to_bigquery(
             db_logger.info("Starting upload_good_csvs_to_bigquery process for prediction data.")
         
         # Use simple authentication (same as working training code)
-        client = bigquery.Client(project=project_id, location=location)
+        # Use credentials from environment variable if provided
+        credentials_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+        if credentials_path:
+            from google.oauth2 import service_account
+            credentials = service_account.Credentials.from_service_account_file(credentials_path)
+            client = bigquery.Client(project=project_id, location=location, credentials=credentials)
+        else:
+            client = bigquery.Client(project=project_id, location=location)
         
         create_dataset_if_not_exists(client, dataset_id, location, db_logger=db_logger)
         delete_table_if_exists(client, dataset_id, table_id, db_logger=db_logger)
@@ -253,7 +260,14 @@ def export_bigquery_table_to_csv(
         # Ensure the export directory exists
         os.makedirs(os.path.dirname(destination_csv), exist_ok=True)
         
-        client = bigquery.Client(project=project_id, location=location)
+        # Use credentials from environment variable if provided
+        credentials_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+        if credentials_path:
+            from google.oauth2 import service_account
+            credentials = service_account.Credentials.from_service_account_file(credentials_path)
+            client = bigquery.Client(project=project_id, location=location, credentials=credentials)
+        else:
+            client = bigquery.Client(project=project_id, location=location)
         table_ref = f"{project_id}.{dataset_id}.{table_id}"
         query = f"SELECT * FROM `{table_ref}`"
         df = client.query(query).to_dataframe()

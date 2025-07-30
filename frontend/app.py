@@ -40,7 +40,7 @@ def cleanup_old_files(folder_path, max_files=20):
         return 0
 
 app = Flask(__name__)
-app.secret_key = "semiconductor-fault-detection"
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default-insecure-key')
 
 # Initialize model predictor
 MODEL_DIR = os.getenv('MODEL_SAVE_DIR', 'training_model')
@@ -70,6 +70,28 @@ except Exception as e:
 # Load environment variables
 load_dotenv()
 FILENAME_PATTERN = os.getenv('FILENAME_PATTERN', r'^wafer_\d{8}_\d{6}\.csv$')
+
+def is_safe_filename(filename):
+    """
+    Validate filename to prevent path traversal attacks.
+    Returns True if filename is safe, False otherwise.
+    """
+    if not filename or not isinstance(filename, str):
+        return False
+    
+    # Prevent any directory traversal
+    if '/' in filename or '\\' in filename or '..' in filename:
+        return False
+        
+    # Only allow .csv files in results
+    if not filename.lower().endswith('.csv'):
+        return False
+        
+    # Optionally, enforce a stricter pattern if needed
+    # if not re.match(r'^prediction_results_\d{8}_\d{6}_wafer_\d{8}_\d{6}\.csv$', filename):
+    #    return False
+        
+    return True
 
 @app.route('/')
 def index():
@@ -132,9 +154,9 @@ def upload():
         results_filenames = []
         
         for file in files:
-            # Validate filename
-            if not re.match(FILENAME_PATTERN, file.filename):
-                flash(f'Invalid filename: {file.filename}. Must follow pattern: wafer_YYYYMMDD_HHMMSS.csv', 'error')
+            # Validate filename (case-insensitive)
+            if not re.match(FILENAME_PATTERN, file.filename, re.IGNORECASE):
+                flash(f'Invalid filename: {file.filename}. Must follow pattern: wafer_YYYYMMDD_HHMMSS.csv (case-insensitive)', 'error')
                 failed_uploads += 1
                 continue
             
@@ -147,11 +169,63 @@ def upload():
             try:
                 # Process the file
                 df = pd.read_csv(filepath)
-                logger.info(f"File uploaded: {filename}, shape: {df.shape}")
+                logger.info(f"🔍 File uploaded: {filename}, shape: {df.shape}")
+                
+                # STRICT VALIDATION: Must have exactly 591 columns (Wafer + 590 features)
+                EXPECTED_COLUMNS = 591
+                if df.shape[1] != EXPECTED_COLUMNS:
+                    error_msg = f"❌ FRONTEND REJECTION: Invalid file structure: Expected {EXPECTED_COLUMNS} columns but got {df.shape[1]} columns. File: {file.filename}"
+                    logger.error(error_msg)
+                    flash(error_msg, 'error')
+                    failed_uploads += 1
+                    continue
+                
+                logger.info(f"✅ Frontend column count validation passed: {df.shape[1]} columns")
+                logger.info(f"🔍 Original columns (first 5): {list(df.columns[:5])}")
+                logger.info(f"🔍 Original columns (last 5): {list(df.columns[-5:])}")
+                
+                # Standardize column names (except first column which is wafer ID)
+                def standardize_column_name(col):
+                    """Comprehensive column name standardization."""
+                    col = str(col).lower()
+                    col = col.replace('-', '_')
+                    col = col.replace(' ', '_')
+                    col = col.replace('.', '_')
+                    col = col.replace('(', '').replace(')', '')
+                    col = col.replace('[', '').replace(']', '')
+                    # Remove any other non-alphanumeric characters except underscores
+                    import re
+                    col = re.sub(r'[^\w]', '_', col)
+                    # Remove multiple consecutive underscores
+                    col = re.sub(r'_+', '_', col)
+                    # Remove leading/trailing underscores
+                    col = col.strip('_')
+                    return col
+                
+                # Keep first column as is (wafer ID), standardize the rest
+                original_column_count = len(df.columns)
+                if len(df.columns) > 1:
+                    new_columns = [df.columns[0]]  # Keep first column as is
+                    new_columns.extend([standardize_column_name(col) for col in df.columns[1:]])
+                    df.columns = new_columns
+                    logger.info(f"🔍 Standardized columns (first 5): {list(df.columns[:5])}")
+                    logger.info(f"🔍 Standardized columns (last 5): {list(df.columns[-5:])}")
+                
+                # FINAL VALIDATION: Ensure we still have the right number of columns after processing
+                if df.shape[1] != EXPECTED_COLUMNS:
+                    error_msg = f"❌ FRONTEND PROCESSING ERROR: Started with {original_column_count} columns but ended with {df.shape[1]} columns after standardization"
+                    logger.error(error_msg)
+                    flash(error_msg, 'error')
+                    failed_uploads += 1
+                    continue
+                
+                logger.info(f"✅ Frontend processing complete: {df.shape[1]} columns maintained")
                 
                 # Run prediction
                 if predictor:
+                    logger.info(f"🚀 Sending to backend predictor: shape {df.shape}")
                     results = predictor.predict(df)
+                    logger.info(f"✅ Backend prediction successful: {len(results)} predictions")
                     
                     # Save results
                     results_filename = f"prediction_results_{timestamp}_{file.filename}"
@@ -169,7 +243,10 @@ def upload():
                     failed_uploads += 1
                     
             except Exception as e:
-                logger.error(f"Error processing file {file.filename}: {e}")
+                logger.error(f"❌ ERROR processing file {file.filename}: {e}")
+                logger.error(f"🔍 Exception type: {type(e).__name__}")
+                import traceback
+                logger.error(f"🔍 Full traceback: {traceback.format_exc()}")
                 flash(f"Error processing file {file.filename}: {e}", "error")
                 failed_uploads += 1
         
@@ -196,6 +273,12 @@ def results():
     filename = request.args.get('filename')
     
     if filename:
+        # Validate filename to prevent path traversal
+        if not is_safe_filename(filename):
+            flash("Invalid filename", "error")
+            logger.warning(f"Security: Blocked access to invalid filename: {filename}")
+            return redirect(url_for('results'))
+            
         try:
             # Load specific result file
             results_path = os.path.join(RESULTS_FOLDER, filename)
@@ -273,6 +356,13 @@ def results():
 @app.route('/api/results/<filename>')
 def api_results(filename):
     """API endpoint to get result data as JSON"""
+    # Validate filename to prevent path traversal
+    if not is_safe_filename(filename):
+        return jsonify({
+            'status': 'error',
+            'message': 'Invalid filename'
+        }), 400
+        
     try:
         results_path = os.path.join(RESULTS_FOLDER, filename)
         results_df = pd.read_csv(results_path)
@@ -326,4 +416,8 @@ def api_results(filename):
 #     return aligned_df, wafer_ids
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    # Load debug mode, host, and port from environment variables
+    debug_mode = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    host = os.getenv('FLASK_HOST', '0.0.0.0')
+    port = int(os.getenv('FLASK_PORT', '5001'))
+    app.run(debug=debug_mode, host=host, port=port)
