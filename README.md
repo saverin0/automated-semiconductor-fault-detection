@@ -1,27 +1,74 @@
-# Automated Semiconductor Fault Detection
+# Automated Semiconductor Wafer Fault Detection
 
-This project aims to automate the detection of faults in semiconductor manufacturing using machine learning. It provides a robust pipeline for data validation, preprocessing, model training, evaluation, and deployment, ensuring high-quality and reliable fault detection for semiconductor production lines.
+## 🏭 What is Semiconductor Wafer Fault Detection?
 
-## Features
+This project implements an **automated machine learning system for detecting manufacturing faults in semiconductor wafers**. Semiconductor wafers are thin slices of silicon used to fabricate integrated circuits (chips). During the manufacturing process, various defects can occur that affect the quality and yield of the final products.
 
-- **Automated Data Validation:** Ensures incoming data meets schema and quality requirements before processing
-- **Data Preprocessing:** Handles missing values, outliers, and feature engineering to prepare data for modeling
+### 🎯 Project Purpose
+
+**Semiconductor manufacturing** is a highly complex process where even minor defects can lead to significant yield losses. This system helps:
+
+- **Detect manufacturing faults** in real-time during wafer production
+- **Improve yield rates** by identifying defective wafers early
+- **Reduce costs** by preventing defective chips from reaching final testing
+- **Ensure quality** in semiconductor manufacturing processes
+- **Automate quality control** to reduce human error and increase efficiency
+
+### 🔬 What are Semiconductor Wafers?
+
+**Semiconductor wafers** are the foundation of modern electronics:
+- **Material**: Primarily silicon, sometimes other semiconductors
+- **Size**: Typically 150mm, 200mm, or 300mm in diameter
+- **Process**: Undergo multiple manufacturing steps (lithography, etching, doping, etc.)
+- **Sensors**: Each wafer has hundreds of sensors monitoring various parameters
+- **Data**: Generates massive amounts of sensor data during manufacturing
+
+### 🚨 Why Fault Detection is Critical
+
+**Manufacturing defects** can occur at any stage:
+- **Chemical contamination** from processing steps
+- **Physical damage** from handling or equipment
+- **Electrical faults** from improper doping or metallization
+- **Pattern defects** from lithography issues
+- **Environmental factors** like temperature, humidity, or particle contamination
+
+**Early detection** prevents:
+- ❌ **Defective chips** reaching customers
+- ❌ **Wasted manufacturing resources**
+- ❌ **Production line delays**
+- ❌ **Quality control failures**
+
+## 🚀 Features
+
+- **Automated Data Validation:** Ensures incoming wafer sensor data meets schema and quality requirements before processing
+- **Data Preprocessing:** Handles missing values, outliers, and feature engineering to prepare wafer data for modeling
 - **Modular Codebase:** Organized into clear modules for validation, transformation, database operations, and modeling
-- **Web Interface:** Flask-based web application for easy data upload and result visualization
-- **Performance Monitoring:** Built-in performance tracking and memory usage monitoring
+- **Web Interface:** Flask-based web application for easy wafer data upload and fault detection results visualization
+- **Performance Monitoring:** Built-in performance tracking and memory usage monitoring for production environments
 - **Security Hardened:** Comprehensive security measures including input validation and model file integrity checks
 - **Type Safety:** Full type hints for better code quality and IDE support
+- **Real-time Predictions:** Instant fault detection with detailed confidence scores and cluster assignments
 
-## Project Structure
+## 📊 Data Structure
+
+Each wafer file contains:
+- **Wafer ID**: Unique identifier for each wafer
+- **590 Sensor Readings**: Various manufacturing parameters (temperature, pressure, chemical concentrations, etc.)
+- **Expected Format**: CSV files with 591 columns (wafer_id + 590 sensors)
+- **File Naming**: `wafer_YYYYMMDD_HHMMSS.csv` (case-insensitive)
+
+## 🏗️ Project Structure
 
 ```
 automated-semiconductor-fault-detection/
-├── data/                    # Raw and processed datasets
+├── data/                    # Raw and processed wafer datasets
+│   ├── training/           # Training data for model development
+│   └── prediction/         # New wafer data for fault detection
 ├── frontend/               # Flask web application
 │   ├── app.py             # Main Flask application
-│   └── templates/         # HTML templates
+│   └── templates/         # HTML templates for web interface
 ├── logs/                   # Logs for pipeline execution and debugging
-├── prediction_results/      # Prediction output files
+├── prediction_results/      # Fault detection output files
 ├── schema/                 # Data schema definitions for validation
 ├── src/                    # Source code modules
 │   ├── best_model_finder/  # Model selection and tuning
@@ -30,8 +77,8 @@ automated-semiconductor-fault-detection/
 │   ├── data_validation/    # Data quality checks
 │   ├── model_testing/      # Prediction functionality
 │   └── utils/              # Configuration and utilities
-├── training_model/         # Trained ML models
-├── uploads/                # Uploaded prediction files
+├── training_model/         # Trained ML models for fault detection
+├── uploads/                # Uploaded wafer files
 ├── .env                    # Environment variables (NEVER commit)
 ├── .gitignore             # Git ignore rules
 ├── LICENSE                 # License information
@@ -194,21 +241,51 @@ Before deploying this application to production, ensure you have completed the f
 ### Usage
 
 #### Web Interface
-- **Upload Data:** Use the web interface to upload CSV files for prediction
-- **View Results:** See prediction results with interactive visualizations
-- **Download Results:** Export prediction results as CSV files
+- **Upload Wafer Data:** Use the web interface to upload wafer CSV files for fault detection
+- **View Fault Detection Results:** See fault detection results with interactive visualizations showing:
+  - **Fault Status**: Good/Bad classification for each wafer
+  - **Confidence Scores**: Probability of fault detection
+  - **Cluster Assignment**: Which manufacturing pattern the wafer follows
+  - **Sensor Analysis**: Key sensor readings that influenced the prediction
+- **Download Results:** Export fault detection results as CSV files for further analysis
 
 #### Command Line
 - **Training Pipeline:** `python main_pipeline.py --mode training`
+  - Trains fault detection models on historical wafer data
+  - Performs clustering to identify different manufacturing patterns
+  - Saves trained models for real-time fault detection
+
 - **Prediction Pipeline:** `python main_pipeline.py --mode prediction`
-- **Full Pipeline:** `python main_pipeline.py --mode full`
+  - Processes new wafer data for fault detection
+  - Generates fault detection reports
+  - Saves results for quality control analysis
 
-### Security Warnings
+#### API Endpoints
+- **POST /upload**: Upload wafer CSV files for fault detection
+- **GET /results**: View fault detection results
+- **GET /results/<filename>**: Download specific fault detection results
 
-- Never use hard-coded secrets in production. Always use environment variables.
-- Ensure `GOOGLE_APPLICATION_CREDENTIALS` points to a secure service account file.
-- **Deserialization Risk:** Only load model files (`joblib.load`) from trusted sources. Malicious files can execute arbitrary code.
-- Disable Flask debug mode in production (`FLASK_DEBUG=False`).
+### 📋 Example Workflow
+
+1. **Prepare Wafer Data**: Ensure your CSV file has 591 columns (wafer_id + 590 sensors)
+2. **Upload via Web Interface**: Navigate to `http://localhost:5001/upload`
+3. **Upload Wafer File**: Select your wafer CSV file (format: `wafer_YYYYMMDD_HHMMSS.csv`)
+4. **View Results**: See real-time fault detection with confidence scores
+5. **Download Report**: Export results for quality control documentation
+
+### 🔍 Understanding Results
+
+**Fault Detection Output:**
+- **Status**: "Good" (no faults detected) or "Bad" (faults detected)
+- **Confidence**: Probability score (0.0-1.0) indicating prediction certainty
+- **Cluster**: Manufacturing pattern classification (0, 1, or 2)
+- **Timestamp**: When the fault detection was performed
+
+**Quality Control Actions:**
+- **Good Wafers**: Continue to next manufacturing step
+- **Bad Wafers**: Flag for inspection, rework, or disposal
+- **High Confidence**: Trust the automated decision
+- **Low Confidence**: Require manual inspection
 
 ## Contributing
 
