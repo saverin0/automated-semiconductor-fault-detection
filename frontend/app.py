@@ -43,9 +43,9 @@ app = Flask(__name__)
 app.secret_key = "semiconductor-fault-detection"
 
 # Initialize model predictor
-MODEL_DIR = os.path.join(project_root, "training_model")
-UPLOAD_FOLDER = os.path.join(project_root, "uploads")
-RESULTS_FOLDER = os.path.join(project_root, "prediction_results")
+MODEL_DIR = os.getenv('MODEL_SAVE_DIR', 'training_model')
+UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', 'uploads')
+RESULTS_FOLDER = os.getenv('RESULTS_DIR', 'prediction_results')
 
 # Setup logger before using it
 logger = setup_logger()

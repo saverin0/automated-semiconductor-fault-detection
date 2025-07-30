@@ -8,6 +8,10 @@ from sklearn.impute import KNNImputer
 from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
 import joblib
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Add the project root to the Python path
 project_root = Path(__file__).parent.parent.parent
@@ -15,27 +19,12 @@ sys.path.insert(0, str(project_root))
 
 # Now import from the project
 from src.best_model_finder.tuner import Model_Finder
+from src.utils.logging_utils import setup_logger as create_logger
 
 def setup_logger():
     """Set up a logger with both console and file output."""
-    logger = logging.getLogger('training_preprocessing')
-    logger.setLevel(logging.INFO)
-    logger.handlers = []  # Clear any existing handlers
-    
-    # Console handler for terminal logs
-    console_handler = logging.StreamHandler()
-    console_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    console_handler.setFormatter(console_formatter)
-    logger.addHandler(console_handler)
-    
-    # File handler
-    os.makedirs('logs', exist_ok=True)
-    file_handler = logging.FileHandler('logs/training_preprocessing.log')
-    file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(file_formatter)
-    logger.addHandler(file_handler)
-    
-    return logger
+    log_file = os.getenv('TRAINING_PREPROCESSING_LOG', 'training_preprocessing.log')
+    return create_logger('training_preprocessing', log_file)
 
 class KMeansClustering:
     def __init__(self):
@@ -221,14 +210,16 @@ def train_models(input_file, logger):
             cluster_X_train, cluster_y_train, cluster_X_test, cluster_y_test
         )
 
-        model_filename = os.path.join(model_save_dir, f"model_cluster_{cluster}_{best_model_name}.joblib")
+        model_filename = os.path.join(model_save_dir, f"{os.getenv('MODEL_CLUSTER_PREFIX', 'model_cluster_')}{cluster}_{best_model_name}.joblib")
         joblib.dump(best_model, model_filename)
         logger.info(f"✅ Saved {best_model_name} for cluster {cluster} as {model_filename}")
 
     # SAVE THE CLUSTERER after creating clusters
     os.makedirs(model_save_dir, exist_ok=True)
-    joblib.dump(kmeans.clusterer, os.path.join(model_save_dir, "kmeans_clusterer.joblib"))
-    logger.info(f"Saved KMeans clusterer to {os.path.join(model_save_dir, 'kmeans_clusterer.joblib')}")
+    clusterer_file = os.getenv('KMEANS_CLUSTERER_FILE', 'kmeans_clusterer.joblib')
+    clusterer_path = os.path.join(model_save_dir, clusterer_file)
+    joblib.dump(kmeans.clusterer, clusterer_path)
+    logger.info(f"Saved KMeans clusterer to {clusterer_path}")
 
     logger.info("="*50)
     logger.info("MODEL TRAINING COMPLETED SUCCESSFULLY!")
@@ -238,8 +229,11 @@ if __name__ == "__main__":
     # Setup logger
     logger = setup_logger()
     
-    # Example usage
-    input_file = "src/exported_data_from_db/training_exported_data.csv"
+    # Get input file from environment variables
+    exported_dir = os.getenv('EXPORTED_DATA_DIR', 'src/exported_data_from_db')
+    training_exported_file = os.getenv('TRAINING_EXPORTED_FILE', 'training_exported_data.csv')
+    input_file = os.path.join(exported_dir, training_exported_file)
+    
     if os.path.exists(input_file):
         train_models(input_file, logger)
     else:

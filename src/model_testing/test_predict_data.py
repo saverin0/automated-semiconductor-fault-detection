@@ -9,35 +9,25 @@ from sklearn.impute import KNNImputer
 from sklearn.cluster import KMeans
 import glob
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Add the project root to the Python path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+from src.utils.logging_utils import setup_logger as create_logger, get_log_file_path, get_file_path, get_dir_path
+
 def setup_logger():
     """Set up a logger with both console and file output."""
-    logger = logging.getLogger('prediction_test')
-    logger.setLevel(logging.INFO)
-    logger.handlers = []  # Clear any existing handlers
-    
-    # Console handler for terminal logs
-    console_handler = logging.StreamHandler()
-    console_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    console_handler.setFormatter(console_formatter)
-    logger.addHandler(console_handler)
-    
-    # File handler
-    os.makedirs('logs', exist_ok=True)
-    file_handler = logging.FileHandler('logs/prediction_test.log')
-    file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(file_formatter)
-    logger.addHandler(file_handler)
-    
-    return logger
+    log_file = os.getenv('PREDICTION_TEST_LOG', 'prediction_test.log')
+    return create_logger('prediction_test', log_file)
 
 class ModelPredictor:
-    def __init__(self, model_dir="training_model", logger=None):
-        self.model_dir = model_dir
+    def __init__(self, model_dir=None, logger=None):
+        self.model_dir = model_dir or os.getenv('MODEL_SAVE_DIR', 'training_model')
         self.logger = logger
         self.models = {}
         self.imputer = None
@@ -49,7 +39,7 @@ class ModelPredictor:
         if not os.path.exists(self.model_dir):
             raise FileNotFoundError(f"Model directory not found: {self.model_dir}")
         
-        model_files = glob.glob(os.path.join(self.model_dir, "model_cluster_*.joblib"))
+        model_files = glob.glob(os.path.join(self.model_dir, f"{os.getenv('MODEL_CLUSTER_PREFIX', 'model_cluster_')}*.joblib"))
         
         if not model_files:
             raise FileNotFoundError(f"No model files found in {self.model_dir}")
@@ -153,7 +143,8 @@ class ModelPredictor:
         """Assign prediction data to clusters."""
         try:
             # LOAD the clusterer that was saved during training
-            clusterer_path = os.path.join(self.model_dir, "kmeans_clusterer.joblib")
+            clusterer_file = os.getenv('KMEANS_CLUSTERER_FILE', 'kmeans_clusterer.joblib')
+            clusterer_path = os.path.join(self.model_dir, clusterer_file)
             if os.path.exists(clusterer_path):
                 self.clusterer = joblib.load(clusterer_path)
                 self.logger.info(f"Loaded clusterer from {clusterer_path}")
@@ -253,9 +244,23 @@ class ModelPredictor:
         
         return model_features
 
-def test_on_prediction_data(prediction_file, model_dir="training_model", output_file=None):
+def test_on_prediction_data(prediction_file=None, model_dir=None, output_file=None):
     """Test trained models on prediction data."""
     logger = setup_logger()
+    
+    # Use environment variables for default paths
+    if prediction_file is None:
+        exported_dir = os.getenv('EXPORTED_DATA_DIR', 'src/exported_data_from_db')
+        prediction_exported_file = os.getenv('PREDICTION_EXPORTED_FILE', 'prediction_exported_data.csv')
+        prediction_file = os.path.join(exported_dir, prediction_exported_file)
+    
+    if model_dir is None:
+        model_dir = os.getenv('MODEL_SAVE_DIR', 'training_model')
+    
+    if output_file is None:
+        results_dir = os.getenv('RESULTS_DIR', 'prediction_results')
+        model_predictions_file = os.getenv('MODEL_PREDICTIONS_FILE', 'model_predictions.csv')
+        output_file = os.path.join(results_dir, model_predictions_file)
     
     try:
         # Load prediction data
@@ -288,10 +293,16 @@ def test_on_prediction_data(prediction_file, model_dir="training_model", output_
         raise
 
 if __name__ == "__main__":
-    # Configuration
-    prediction_file = "src/exported_data_from_db/prediction_exported_data.csv"
-    model_dir = "training_model"
-    output_file = "prediction_results/model_predictions.csv"
+    # Configuration from environment variables
+    exported_dir = os.getenv('EXPORTED_DATA_DIR', 'src/exported_data_from_db')
+    prediction_exported_file = os.getenv('PREDICTION_EXPORTED_FILE', 'prediction_exported_data.csv')
+    prediction_file = os.path.join(exported_dir, prediction_exported_file)
+    
+    model_dir = os.getenv('MODEL_SAVE_DIR', 'training_model')
+    
+    results_dir = os.getenv('RESULTS_DIR', 'prediction_results')
+    model_predictions_file = os.getenv('MODEL_PREDICTIONS_FILE', 'model_predictions.csv')
+    output_file = os.path.join(results_dir, model_predictions_file)
     
     # Setup logger
     logger = setup_logger()

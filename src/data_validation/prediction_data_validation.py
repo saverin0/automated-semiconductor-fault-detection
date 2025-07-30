@@ -9,14 +9,10 @@ import datetime
 from pathlib import Path
 
 def setup_logger():
-    """Configure and return a logger for prediction validation."""
-    # Create logs directory if it doesn't exist
-    os.makedirs('logs', exist_ok=True)
-    
-    # Set up logger with both console and file output
-    logger = logging.getLogger('prediction_validator')
+    """Set up logger for prediction data validation."""
+    logger = logging.getLogger('prediction_validation')
     logger.setLevel(logging.INFO)
-    logger.handlers = []  # Clear any existing handlers
+    logger.handlers = []
     
     # Console handler
     console_handler = logging.StreamHandler()
@@ -25,7 +21,10 @@ def setup_logger():
     logger.addHandler(console_handler)
     
     # File handler
-    file_handler = logging.FileHandler('logs/prediction_validation.log')
+    logs_dir = os.getenv('LOGS_DIR', 'logs')
+    os.makedirs(logs_dir, exist_ok=True)
+    log_file = os.getenv('PREDICTION_VALIDATION_LOG', 'prediction_validation.log')
+    file_handler = logging.FileHandler(os.path.join(logs_dir, log_file))
     file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(file_formatter)
     logger.addHandler(file_handler)
@@ -147,11 +146,11 @@ def create_error_file(filepath, error_message, bad_dir):
 def main():
     logger = setup_logger()
     
-    # Directories
-    input_dir = "data/prediction/input"
-    good_dir = "data/prediction/good" 
-    bad_dir = "data/prediction/bad"
-    schema_file = "schema/schema_prediction.json"
+    # Directories from environment variables
+    input_dir = os.getenv('PREDICTION_INPUT_DIR', 'data/prediction/input')
+    good_dir = os.getenv('PREDICTION_GOOD_DIR', 'data/prediction/good')
+    bad_dir = os.getenv('PREDICTION_BAD_DIR', 'data/prediction/bad')
+    schema_file = os.getenv('PREDICTION_SCHEMA_FILE', 'schema/schema_prediction.json')
     
     # Create directories if they don't exist
     for directory in [input_dir, good_dir, bad_dir]:

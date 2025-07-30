@@ -2,8 +2,8 @@
     "SampleFileName": "wafer_08012020_120000.csv",
     "LengthOfDateStampInFile": 8,
     "LengthOfTimeStampInFile": 6,
-    "NumberOfColumns": 591,
-    "columns": {
+    "NumberofColumns": 591,
+    "ColName": {
         "Wafer": "varchar",
         "Sensor - 1": "float",
         "Sensor - 2": "float",

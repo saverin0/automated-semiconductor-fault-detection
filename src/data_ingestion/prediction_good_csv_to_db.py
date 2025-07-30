@@ -29,8 +29,10 @@ def setup_logger():
     logger.addHandler(console_handler)
     
     # File handler
-    os.makedirs('logs', exist_ok=True)
-    file_handler = logging.FileHandler('logs/prediction_db.log')
+    logs_dir = os.getenv('LOGS_DIR', 'logs')
+    os.makedirs(logs_dir, exist_ok=True)
+    log_file = os.getenv('PREDICTION_DB_LOG', 'prediction_db.log')
+    file_handler = logging.FileHandler(os.path.join(logs_dir, log_file))
     file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(file_formatter)
     logger.addHandler(file_handler)
@@ -217,7 +219,9 @@ def upload_good_csvs_to_bigquery(
                     db_logger.info("Upload complete.")
                     db_logger.info(f"Uploaded columns: {list(big_df.columns)}")
                 # After uploading, log columns to a separate file
-                columns_log_path = f"logs/{table_id}_columns.log"
+                logs_dir = os.getenv('LOGS_DIR', 'logs')
+                columns_log_file = os.getenv('WAFER_PREDICTION_DATA_COLUMNS_LOG', f'{table_id}_columns.log')
+                columns_log_path = os.path.join(logs_dir, columns_log_file)
                 with open(columns_log_path, "w") as f:
                     f.write(", ".join(big_df.columns))
                 if db_logger:
@@ -262,35 +266,47 @@ def export_bigquery_table_to_csv(
             db_logger.error(f"Failed to export table {table_ref} to CSV: {e}", exc_info=True)
         raise
 
-if __name__ == "__main__":
+def upload_prediction_data():
+    """Main function to upload prediction data to BigQuery."""
     # Setup logger
     db_logger = setup_logger()
     
-    required_env_vars = ["PREDICTION_GOOD_DIR", "BQ_PROJECT", "BQ_DATASET", "BQ_TABLE_PREDICTION", "BQ_SCHEMA_JSON_PREDICTION"]
-    missing_vars = [var for var in required_env_vars if not os.getenv(var)]
-    if missing_vars:
-        db_logger.error(f"Missing required environment variables: {', '.join(missing_vars)}")
-        raise EnvironmentError(f"Missing required environment variables: {', '.join(missing_vars)}")
+    try:
+        required_env_vars = ["PREDICTION_GOOD_DIR", "BQ_PROJECT", "BQ_DATASET", "BQ_TABLE_PREDICTION", "BQ_SCHEMA_JSON_PREDICTION"]
+        missing_vars = [var for var in required_env_vars if not os.getenv(var)]
+        if missing_vars:
+            db_logger.error(f"Missing required environment variables: {', '.join(missing_vars)}")
+            return False
 
-    good_dir = os.getenv("PREDICTION_GOOD_DIR", "data/prediction/good")
-    project_id = os.getenv("BQ_PROJECT")
-    dataset_id = os.getenv("BQ_DATASET")
-    table_id = os.getenv("BQ_TABLE_PREDICTION")
-    location = os.getenv("BQ_LOCATION", "US")
-    schema_json_path = os.getenv("BQ_SCHEMA_JSON_PREDICTION")
+        good_dir = os.getenv("PREDICTION_GOOD_DIR", "data/prediction/good")
+        project_id = os.getenv("BQ_PROJECT")
+        dataset_id = os.getenv("BQ_DATASET")
+        table_id = os.getenv("BQ_TABLE_PREDICTION")
+        location = os.getenv("BQ_LOCATION", "US")
+        schema_json_path = os.getenv("BQ_SCHEMA_JSON_PREDICTION")
 
-    # Check if prediction good directory exists
-    if not os.path.exists(good_dir):
-        db_logger.error(f"Prediction good directory not found: {good_dir}")
-        raise FileNotFoundError(f"Prediction good directory not found: {good_dir}")
+        # Check if prediction good directory exists
+        if not os.path.exists(good_dir):
+            db_logger.error(f"Prediction good directory not found: {good_dir}")
+            return False
 
-    schema, cleaned_col_map = load_bq_schema_from_json(schema_json_path, db_logger=db_logger)
+        schema, cleaned_col_map = load_bq_schema_from_json(schema_json_path, db_logger=db_logger)
 
-    upload_good_csvs_to_bigquery(
-        good_dir, project_id, dataset_id, table_id, schema, cleaned_col_map, location, db_logger=db_logger
-    )
+        upload_good_csvs_to_bigquery(
+            good_dir, project_id, dataset_id, table_id, schema, cleaned_col_map, location, db_logger=db_logger
+        )
 
-    # Export to CSV in the src/exported_data_from_db folder
-    export_bigquery_table_to_csv(
-        project_id, dataset_id, table_id, "src/exported_data_from_db/prediction_exported_data.csv", location, db_logger=db_logger
-    )
+        # Export to CSV in the exported data directory
+        exported_dir = os.getenv('EXPORTED_DATA_DIR', 'src/exported_data_from_db')
+        export_file_path = os.path.join(exported_dir, 'prediction_exported_data.csv')
+        export_bigquery_table_to_csv(
+            project_id, dataset_id, table_id, export_file_path, location, db_logger=db_logger
+        )
+        
+        return True
+    except Exception as e:
+        db_logger.error(f"Prediction data upload failed: {e}")
+        return False
+
+if __name__ == "__main__":
+    upload_prediction_data()

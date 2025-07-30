@@ -201,7 +201,9 @@ def upload_good_csvs_to_bigquery(
                     db_logger.info("Upload complete.")
                     db_logger.info(f"Uploaded columns: {list(big_df.columns)}")
                 # After uploading, log columns to a separate file
-                columns_log_path = f"logs/{table_id}_columns.log"
+                logs_dir = os.getenv('LOGS_DIR', 'logs')
+                columns_log_file = os.getenv('WAFER_TRAINING_DATA_COLUMNS_LOG', f'{table_id}_columns.log')
+                columns_log_path = os.path.join(logs_dir, columns_log_file)
                 with open(columns_log_path, "w") as f:
                     f.write(", ".join(big_df.columns))
                 if db_logger:
@@ -245,32 +247,44 @@ def export_bigquery_table_to_csv(
             db_logger.error(f"Failed to export table {table_ref} to CSV: {e}", exc_info=True)
         raise
 
-if __name__ == "__main__":
+def upload_training_data():
+    """Main function to upload training data to BigQuery."""
     import logging
     # Setup a simple logger for demonstration
     logging.basicConfig(level=logging.INFO)
     db_logger = logging.getLogger("db_process")
 
-    required_env_vars = ["TRAINING_GOOD_DIR", "BQ_PROJECT", "BQ_DATASET", "BQ_TABLE_TRAINING", "BQ_SCHEMA_JSON_TRAINING"]
-    missing_vars = [var for var in required_env_vars if not os.getenv(var)]
-    if missing_vars:
-        db_logger.error(f"Missing required environment variables: {', '.join(missing_vars)}")
-        raise EnvironmentError(f"Missing required environment variables: {', '.join(missing_vars)}")
+    try:
+        required_env_vars = ["TRAINING_GOOD_DIR", "BQ_PROJECT", "BQ_DATASET", "BQ_TABLE_TRAINING", "BQ_SCHEMA_JSON_TRAINING"]
+        missing_vars = [var for var in required_env_vars if not os.getenv(var)]
+        if missing_vars:
+            db_logger.error(f"Missing required environment variables: {', '.join(missing_vars)}")
+            return False
 
-    good_dir = os.getenv("TRAINING_GOOD_DIR")
-    project_id = os.getenv("BQ_PROJECT")
-    dataset_id = os.getenv("BQ_DATASET")
-    table_id = os.getenv("BQ_TABLE_TRAINING")
-    location = os.getenv("BQ_LOCATION", "US")
-    schema_json_path = os.getenv("BQ_SCHEMA_JSON_TRAINING")
+        good_dir = os.getenv("TRAINING_GOOD_DIR")
+        project_id = os.getenv("BQ_PROJECT")
+        dataset_id = os.getenv("BQ_DATASET")
+        table_id = os.getenv("BQ_TABLE_TRAINING")
+        location = os.getenv("BQ_LOCATION", "US")
+        schema_json_path = os.getenv("BQ_SCHEMA_JSON_TRAINING")
 
-    schema, cleaned_col_map = load_bq_schema_from_json(schema_json_path, db_logger=db_logger)
+        schema, cleaned_col_map = load_bq_schema_from_json(schema_json_path, db_logger=db_logger)
 
-    upload_good_csvs_to_bigquery(
-        good_dir, project_id, dataset_id, table_id, schema, cleaned_col_map, location, db_logger=db_logger
-    )
+        upload_good_csvs_to_bigquery(
+            good_dir, project_id, dataset_id, table_id, schema, cleaned_col_map, location, db_logger=db_logger
+        )
 
-    # Updated export path
-    export_bigquery_table_to_csv(
-        project_id, dataset_id, table_id, "src/exported_data_from_db/training_exported_data.csv", location, db_logger=db_logger
-    )
+        # Export to CSV in the exported data directory
+        exported_dir = os.getenv('EXPORTED_DATA_DIR', 'src/exported_data_from_db')
+        export_file_path = os.path.join(exported_dir, 'training_exported_data.csv')
+        export_bigquery_table_to_csv(
+            project_id, dataset_id, table_id, export_file_path, location, db_logger=db_logger
+        )
+        
+        return True
+    except Exception as e:
+        db_logger.error(f"Training data upload failed: {e}")
+        return False
+
+if __name__ == "__main__":
+    upload_training_data()
