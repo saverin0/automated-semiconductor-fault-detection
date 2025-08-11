@@ -84,21 +84,21 @@ class Model_Finder:
             
             if search_method == RandomizedSearchCV:
                 grid = search_method(
-                    RandomForestClassifier(random_state=42, n_jobs=-1),
+                    RandomForestClassifier(random_state=42, n_jobs=2),
                     param_grid, 
                     n_iter=10,  # Reduced iterations for faster training
                     cv=cv_folds,  # Use variable cv_folds
                     scoring='f1_weighted',
-                    n_jobs=-1,
+                    n_jobs=2,
                     random_state=42
                 )
             else:
                 grid = search_method(
-                    RandomForestClassifier(random_state=42, n_jobs=-1),
+                    RandomForestClassifier(random_state=42, n_jobs=2),  # was n_jobs=2
                     param_grid, 
                     cv=cv_folds,  # Use variable cv_folds
                     scoring='f1_weighted',
-                    n_jobs=-1
+                    n_jobs=2  # was n_jobs=2
                 )
             
             grid.fit(train_x, train_y)
@@ -176,7 +176,7 @@ class Model_Finder:
                     n_iter=6 if self.ultra_fast_mode else 10,  # Even fewer iterations for ultra-fast
                     cv=cv_folds,
                     scoring='f1_weighted',
-                    n_jobs=-1,
+                    n_jobs=2,
                     random_state=42
                 )
             else:
@@ -185,7 +185,7 @@ class Model_Finder:
                     param_grid,
                     cv=cv_folds,
                     scoring='f1_weighted',
-                    n_jobs=-1
+                    n_jobs=2
                 )
             
             grid.fit(train_x, train_y)
@@ -271,7 +271,7 @@ class Model_Finder:
                 grid = RandomizedSearchCV(
                     xgb.XGBClassifier(
                         random_state=42,
-                        n_jobs=-1,
+                        n_jobs=2,
                         use_label_encoder=False,
                         eval_metric='logloss'
                     ),
@@ -279,7 +279,7 @@ class Model_Finder:
                     n_iter=4 if self.ultra_fast_mode else 10,  # Even fewer iterations for ultra-fast
                     cv=cv_folds,
                     scoring='f1_weighted',
-                    n_jobs=-1,
+                    n_jobs=2,
                     random_state=42,
                     verbose=0
                 )
@@ -287,14 +287,14 @@ class Model_Finder:
                 grid = GridSearchCV(
                     xgb.XGBClassifier(
                         random_state=42,
-                        n_jobs=-1,
+                        n_jobs=2,
                         use_label_encoder=False,
                         eval_metric='logloss'
                     ),
                     param_grid,
                     cv=cv_folds,
                     scoring='f1_weighted',
-                    n_jobs=-1,
+                    n_jobs=2,
                     verbose=0
                 )
             
@@ -368,7 +368,7 @@ class Model_Finder:
                 param_grid,
                 cv=3,
                 scoring='f1_weighted',
-                n_jobs=-1
+                n_jobs=2
             )
             
             grid.fit(train_x_scaled, train_y)
@@ -421,7 +421,7 @@ class Model_Finder:
                     min_samples_leaf=1,
                     class_weight='balanced',
                     random_state=42,
-                    n_jobs=-1
+                    n_jobs=2
                 )
                 rf_model.fit(train_x, train_y)
                 rf_pred = rf_model.predict(test_x)
@@ -516,7 +516,7 @@ class Model_Finder:
                 max_depth=10,
                 class_weight='balanced',
                 random_state=42,
-                n_jobs=-1
+                n_jobs=2
             )
             default_model.fit(train_x, train_y)
             return 'Random Forest (Default)', default_model
