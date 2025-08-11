@@ -57,7 +57,53 @@ Each wafer file contains:
 - **Expected Format**: CSV files with 591 columns (wafer_id + 590 sensors)
 - **File Naming**: `wafer_YYYYMMDD_HHMMSS.csv` (case-insensitive)
 
-## 🏗️ Project Structure
+## 🏗️ System Architecture
+
+### 🔄 Machine Learning Workflow
+
+Our automated semiconductor fault detection system follows a comprehensive machine learning pipeline with three main phases:
+
+#### **Phase I: Model Training & Optimization**
+```
+Start → Data (Batches) for Training → Data Validation → Data Transformation → 
+Data Insertion in Database → Export Data from Database to CSV → Data Preprocessing → 
+Data Clustering → Get Best Model of Each Cluster → Hyperparameter Tuning
+```
+
+**Key Components:**
+- **Data Ingestion**: Batch processing of historical wafer sensor data
+- **Data Validation**: Schema validation and quality checks for training data
+- **Data Transformation**: Format standardization and feature engineering
+- **Database Storage**: Secure storage of training data in BigQuery
+- **Clustering**: K-means clustering to identify manufacturing patterns
+- **Model Selection**: Best model selection per cluster (Decision Tree, Random Forest, Gradient Boosting)
+- **Hyperparameter Tuning**: Automated optimization of model parameters
+
+#### **Phase II: Model Deployment**
+```
+Hyperparameter Tuning → Model Saving → Cloud Setup → Pushing App to Cloud → Application Start
+```
+
+**Key Components:**
+- **Model Persistence**: Saving optimized models as joblib files
+- **Cloud Infrastructure**: Google Cloud Platform deployment
+- **Application Deployment**: Flask web application with RESTful API
+- **Production Readiness**: Security hardening and performance optimization
+
+#### **Phase III: Real-time Prediction**
+```
+Application Start → Data from Client → Data Validation → Data Transformation → 
+Data Insertion in Database → Export Data from Database to CSV → Data Preprocessing → 
+Data Clustering → Model Call for Specific Cluster → Prediction → Export Prediction to CSV → End
+```
+
+**Key Components:**
+- **Client Interface**: Web-based wafer data upload
+- **Real-time Processing**: Instant fault detection on new wafer data
+- **Cluster-based Prediction**: Automatic model selection based on data patterns
+- **Result Generation**: Detailed fault detection reports with confidence scores
+
+### 🏗️ Project Structure
 
 ```
 automated-semiconductor-fault-detection/
