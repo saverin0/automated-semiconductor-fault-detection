@@ -1,4 +1,4 @@
-# Wafer Fault Detection - Project Overview
+# Semiconductor Wafer Fault Detection - Project Overview
 
 ## 🎯 Problem Statement
 
