@@ -153,9 +153,21 @@ def preprocess_data(df, logger=None):
     X, Y = preprocessor.preprocess(df)
     return X, Y
 
-def train_models(input_file, logger):
+def train_models(input_file, logger, optimization_mode='ultra_fast'):
+    """
+    Train models with different optimization modes.
+    
+    Args:
+        input_file (str): Path to training data CSV file
+        logger: Logger instance
+        optimization_mode (str): 'ultra_fast', 'quick', or 'normal'
+            - ultra_fast: Minimal hyperparameter tuning, instant for small datasets
+            - quick: Balanced performance and speed  
+            - normal: Comprehensive hyperparameter search
+    """
     logger.info("="*50)
     logger.info("STARTING MODEL TRAINING PROCESS")
+    logger.info(f"Optimization Mode: {optimization_mode.upper()}")
     logger.info("="*50)
     
     # 1. Load data
@@ -200,7 +212,32 @@ def train_models(input_file, logger):
 
     # 6. Train and save models for each cluster
     logger.info("Starting model training for each cluster...")
-    model_finder = Model_Finder(file_object=None, logger_object=logger)
+    
+    # Set optimization parameters based on mode
+    if optimization_mode == 'ultra_fast':
+        use_quick_mode = True
+        ultra_fast_mode = True
+        logger.info("🚀 Using ULTRA-FAST mode: Minimal tuning, instant for small datasets")
+    elif optimization_mode == 'quick':
+        use_quick_mode = True
+        ultra_fast_mode = False
+        logger.info("⚡ Using QUICK mode: Balanced performance and speed")
+    elif optimization_mode == 'normal':
+        use_quick_mode = False
+        ultra_fast_mode = False
+        logger.info("🎛️ Using NORMAL mode: Comprehensive hyperparameter search")
+    else:
+        # Default to ultra_fast for unknown modes
+        use_quick_mode = True
+        ultra_fast_mode = True
+        logger.warning(f"Unknown optimization mode '{optimization_mode}', defaulting to ultra_fast")
+    
+    model_finder = Model_Finder(
+        file_object=None, 
+        logger_object=logger, 
+        use_quick_mode=use_quick_mode, 
+        ultra_fast_mode=ultra_fast_mode
+    )
     model_save_dir = os.getenv("MODEL_SAVE_DIR", "training_model")
     os.makedirs(model_save_dir, exist_ok=True)
     logger.info(f"Models will be saved to: {model_save_dir}")
@@ -247,7 +284,9 @@ if __name__ == "__main__":
     input_file = os.path.join(exported_dir, training_exported_file)
     
     if os.path.exists(input_file):
-        train_models(input_file, logger)
+        # Use ultra_fast mode when run directly for development/testing
+        logger.info("🚀 Running in DIRECT MODE - Using ultra_fast optimization for development")
+        train_models(input_file, logger, optimization_mode='ultra_fast')
     else:
         logger.error(f"Input file not found: {input_file}")
         logger.info("Please provide a valid CSV file path")

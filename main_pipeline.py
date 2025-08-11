@@ -165,8 +165,8 @@ class MainPipeline:
             # Set up training logger
             training_logger = setup_logger()
             
-            # Train models
-            train_models(training_export_path, training_logger)
+            # Train models with quick mode (balanced performance for main pipeline)
+            train_models(training_export_path, training_logger, optimization_mode='quick')
             self.logger.info("✅ Model training completed successfully")
             return True
             
@@ -174,10 +174,30 @@ class MainPipeline:
             self.logger.error(f"❌ Model training error: {e}")
             return False
     
-    def step_6_validate_prediction_data(self):
-        """Step 6: Validate prediction CSV files."""
+    def step_6_create_prediction_schema(self):
+        """Step 6: Create JSON schema for prediction data validation."""
         self.logger.info("=" * 60)
-        self.logger.info("STEP 6: Validating Prediction Data")
+        self.logger.info("STEP 6: Creating Prediction JSON Schema")
+        self.logger.info("=" * 60)
+        
+        try:
+            from schema.create_prediction_json_schema import generate_prediction_schema
+            output_path = "schema/schema_prediction.json"
+            result = generate_prediction_schema(output_path, num_columns=591)
+            if result == 0:
+                self.logger.info("✅ Prediction schema created successfully")
+                return True
+            else:
+                self.logger.error("❌ Failed to create prediction schema")
+                return False
+        except Exception as e:
+            self.logger.error(f"❌ Failed to create prediction schema: {e}")
+            return False
+    
+    def step_7_validate_prediction_data(self):
+        """Step 7: Validate prediction CSV files."""
+        self.logger.info("=" * 60)
+        self.logger.info("STEP 7: Validating Prediction Data")
         self.logger.info("=" * 60)
         
         try:
@@ -189,10 +209,10 @@ class MainPipeline:
             self.logger.error(f"❌ Prediction data validation error: {e}")
             return False
     
-    def step_7_upload_prediction_to_db(self):
-        """Step 7: Upload prediction files to database."""
+    def step_8_upload_prediction_to_db(self):
+        """Step 8: Upload prediction files to database."""
         self.logger.info("=" * 60)
-        self.logger.info("STEP 7: Uploading Prediction Data to Database")
+        self.logger.info("STEP 8: Uploading Prediction Data to Database")
         self.logger.info("=" * 60)
         
         try:
@@ -208,10 +228,10 @@ class MainPipeline:
             self.logger.error(f"❌ Prediction data upload error: {e}")
             return False
     
-    def step_8_export_prediction_from_db(self):
-        """Step 8: Export prediction data from database."""
+    def step_9_export_prediction_from_db(self):
+        """Step 9: Export prediction data from database."""
         self.logger.info("=" * 60)
-        self.logger.info("STEP 8: Exporting Prediction Data from Database")
+        self.logger.info("STEP 9: Exporting Prediction Data from Database")
         self.logger.info("=" * 60)
         
         try:
@@ -228,10 +248,10 @@ class MainPipeline:
             self.logger.error(f"❌ Prediction data export check error: {e}")
             return False
     
-    def step_9_run_predictions(self):
-        """Step 9: Run predictions using trained models."""
+    def step_10_run_predictions(self):
+        """Step 10: Run predictions using trained models."""
         self.logger.info("=" * 60)
-        self.logger.info("STEP 9: Running Predictions")
+        self.logger.info("STEP 10: Running Predictions")
         self.logger.info("=" * 60)
         
         try:
@@ -305,10 +325,11 @@ class MainPipeline:
         start_time = datetime.now()
         
         steps = [
-            ("Validate Prediction Data", self.step_6_validate_prediction_data),
-            ("Upload Prediction to DB", self.step_7_upload_prediction_to_db),
-            ("Export Prediction from DB", self.step_8_export_prediction_from_db),
-            ("Run Predictions", self.step_9_run_predictions)
+            ("Create Prediction Schema", self.step_6_create_prediction_schema),
+            ("Validate Prediction Data", self.step_7_validate_prediction_data),
+            ("Upload Prediction to DB", self.step_8_upload_prediction_to_db),
+            ("Export Prediction from DB", self.step_9_export_prediction_from_db),
+            ("Run Predictions", self.step_10_run_predictions)
         ]
         
         for step_name, step_func in steps:

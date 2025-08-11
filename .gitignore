@@ -49,6 +49,10 @@ dist/
 # Cython debug symbols
 cython_debug/
 
+# Google Cloud SDK
+google-cloud-sdk/
+**/google-cloud-sdk/
+
 # PyInstaller
 *.egg-info/
 

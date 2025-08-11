@@ -13,14 +13,14 @@ def generate_prediction_schema(
         "SampleFileName": sample_filename,
         "LengthOfDateStampInFile": 8,
         "LengthOfTimeStampInFile": 6,
-        "NumberofColumns": num_columns,
-        "ColName": {}
+        "NumberOfColumns": num_columns,
+        "columns": {}
     }
     # Add Wafer column
-    schema["ColName"]["Wafer"] = "varchar"
+    schema["columns"]["Wafer"] = "varchar"
     # Add Sensor columns
     for i in range(1, num_columns):
-        schema["ColName"][f"Sensor - {i}"] = "float"
+        schema["columns"][f"Sensor - {i}"] = "float"
     # Save the schema to a JSON file
     with open(output_path, 'w') as f:
         json.dump(schema, f, indent=2)
