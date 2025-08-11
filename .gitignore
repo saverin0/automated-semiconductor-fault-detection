@@ -53,6 +53,26 @@ cython_debug/
 google-cloud-sdk/
 **/google-cloud-sdk/
 
+# Google Cloud credentials and service account keys
+*.json
+!schema/*.json
+service-account*.json
+**/service-account*.json
+credentials.json
+**/credentials.json
+*-key.json
+**/*-key.json
+gcp-*.json
+**/gcp-*.json
+google-credentials*.json
+**/google-credentials*.json
+application_default_credentials.json
+**/application_default_credentials.json
+
+# Google Cloud configuration
+.config/gcloud/
+**/.config/gcloud/
+
 # PyInstaller
 *.egg-info/
 
