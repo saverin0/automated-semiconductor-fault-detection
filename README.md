@@ -40,7 +40,8 @@ This project implements an **automated machine learning system for detecting man
 
 ## 🚀 Features
 
-- **Automated Data Validation:** Ensures incoming wafer sensor data meets schema and quality requirements before processing
+- **Automated Data Validation:** Ensures incoming wafer sensor data meets schema and quality requirements with Good/Bad file separation
+- **Validation-First Approach:** Data validation occurs FIRST in the pipeline, preventing downstream processing errors
 - **Data Preprocessing:** Handles missing values, outliers, and feature engineering to prepare wafer data for modeling
 - **Modular Codebase:** Organized into clear modules for validation, transformation, database operations, and modeling
 - **Web Interface:** Flask-based web application for easy wafer data upload and fault detection results visualization
@@ -48,6 +49,19 @@ This project implements an **automated machine learning system for detecting man
 - **Security Hardened:** Comprehensive security measures including input validation and model file integrity checks
 - **Type Safety:** Full type hints for better code quality and IDE support
 - **Real-time Predictions:** Instant fault detection with detailed confidence scores and cluster assignments
+
+## 🔍 Data Validation Process
+
+The system implements a robust validation pipeline that occurs **FIRST** in the workflow:
+
+1. **Input Validation**: Files are checked for proper naming conventions and format
+2. **Schema Validation**: Column structure and data types are validated against predefined schemas
+3. **Content Validation**: Data quality checks including null value detection
+4. **File Separation**: Valid files are moved to "good" directory, invalid files to "bad" directory
+5. **Error Reporting**: Detailed error logs are generated for rejected files
+6. **Pipeline Continuation**: Only "good" files proceed to database upload and subsequent processing
+
+This validation-first approach ensures data quality and prevents downstream processing errors.
 
 ## 📊 Data Structure
 
@@ -65,16 +79,16 @@ Our automated semiconductor fault detection system follows a comprehensive machi
 
 #### **Phase I: Model Training & Optimization**
 ```
-Start → Data (Batches) for Training → Data Validation → Data Transformation → 
-Data Insertion in Database → Export Data from Database to CSV → Data Preprocessing → 
+Start → Data (Batches) for Training → Data Validation & Good/Bad Separation → 
+Database Upload (Good Files Only) → Export Data from Database to CSV → Data Preprocessing → 
 Data Clustering → Get Best Model of Each Cluster → Hyperparameter Tuning
 ```
 
 **Key Components:**
 - **Data Ingestion**: Batch processing of historical wafer sensor data
-- **Data Validation**: Schema validation and quality checks for training data
-- **Data Transformation**: Format standardization and feature engineering
-- **Database Storage**: Secure storage of training data in BigQuery
+- **Data Validation**: Schema validation and quality checks with Good/Bad file separation
+- **Database Upload**: Only validated "good" files are uploaded to BigQuery
+- **Data Export**: Validated data exported from database for processing
 - **Clustering**: K-means clustering to identify manufacturing patterns
 - **Model Selection**: Best model selection per cluster (Decision Tree, Random Forest, Gradient Boosting)
 - **Hyperparameter Tuning**: Automated optimization of model parameters
@@ -92,13 +106,15 @@ Hyperparameter Tuning → Model Saving → Cloud Setup → Pushing App to Cloud 
 
 #### **Phase III: Real-time Prediction**
 ```
-Application Start → Data from Client → Data Validation → Data Transformation → 
-Data Insertion in Database → Export Data from Database to CSV → Data Preprocessing → 
+Application Start → Data from Client → Data Validation & Good/Bad Separation → 
+Database Upload (Good Files Only) → Export Data from Database to CSV → Data Preprocessing → 
 Data Clustering → Model Call for Specific Cluster → Prediction → Export Prediction to CSV → End
 ```
 
 **Key Components:**
 - **Client Interface**: Web-based wafer data upload
+- **Data Validation**: Schema validation and quality checks with Good/Bad file separation
+- **Database Upload**: Only validated "good" files are uploaded to BigQuery
 - **Real-time Processing**: Instant fault detection on new wafer data
 - **Cluster-based Prediction**: Automatic model selection based on data patterns
 - **Result Generation**: Detailed fault detection reports with confidence scores

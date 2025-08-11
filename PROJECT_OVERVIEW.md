@@ -23,29 +23,28 @@ There are two classes: **+1** and **-1**
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐         │
-│  │   INPUT     │    │  PROCESSING │    │   OUTPUT    │         │
+│  │   INPUT     │    │  VALIDATION │    │  PROCESSING │         │
 │  │             │    │             │    │             │         │
-│  │ • Wafer     │───▶│ • Data      │───▶│ • Fault     │         │
-│  │   Sensor    │    │   Validation│    │   Detection │         │
-│  │   Data      │    │ • Data      │    │   Results   │         │
-│  │ • Schema    │    │   Preprocess│    │ • Good/Bad  │         │
-│  │   Files     │    │ • Clustering│    │   Status    │         │
-│  │             │    │ • Model     │    │ • Confidence│         │
-│  │             │    │   Training  │    │   Scores    │         │
+│  │ • Wafer     │───▶│ • Schema    │───▶│ • Data      │         │
+│  │   Sensor    │    │   Validation│    │   Preprocess│         │
+│  │   Data      │    │ • Good/Bad  │    │ • Clustering│         │
+│  │ • Schema    │    │   Separation│    │ • Model     │         │
+│  │   Files     │    │ • Error     │    │   Training  │         │
+│  │             │    │   Reporting │    │ • Prediction│         │
+│  │             │    │             │    │             │         │
 │  └─────────────┘    └─────────────┘    └─────────────┘         │
 │                                                                 │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐         │
-│  │   TRAINING  │    │  PREDICTION │    │  DEPLOYMENT │         │
-│  │   PHASE     │    │   PHASE     │    │   PHASE     │         │
+│  │   OUTPUT    │    │   DATABASE  │    │  DEPLOYMENT │         │
 │  │             │    │             │    │             │         │
-│  │ • Historical│    │ • New Wafer │    │ • Cloud     │         │
-│  │   Data      │    │   Data      │    │   Platform  │         │
-│  │ • Model     │    │ • Real-time │    │ • Web       │         │
-│  │   Training  │    │   Prediction│    │   Interface │         │
-│  │ • Validation│    │ • Results   │    │ • API       │         │
-│  │   & Testing │    │   Export    │    │   Endpoints │         │
+│  │ • Fault     │    │ • BigQuery  │    │ • Cloud     │         │
+│  │   Detection │    │ • Data      │    │   Platform  │         │
+│  │   Results   │    │   Storage   │    │ • Web       │         │
+│  │ • Good/Bad  │    │ • Export    │    │   Interface │         │
+│  │   Status    │    │   Pipeline  │    │ • API       │         │
+│  │ • Confidence│    │             │    │   Endpoints │         │
 │  └─────────────┘    └─────────────┘    └─────────────┘         │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -96,8 +95,9 @@ There are two classes: **+1** and **-1**
 │ • CSV Files │    │ • Schema    │    │ • BigQuery  │    │ • Clustering│
 │ • Schema    │    │   Validation│    │ • Tables    │    │ • Training  │
 │   Files     │    │ • Data Type │    │ • Data      │    │ • Prediction│
-│             │    │   Check     │    │   Export    │    │             │
-│             │    │ • Null Check│    │             │    │             │
+│             │    │ • Null Check│    │   Export    │    │             │
+│             │    │ • Good/Bad  │    │             │    │             │
+│             │    │   Separation│    │             │    │             │
 └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
        │                   │                   │                   │
        ▼                   ▼                   ▼                   ▼
@@ -118,19 +118,33 @@ There are two classes: **+1** and **-1**
 
 ### **Data Processing Pipeline**
 1. **Data Ingestion**: CSV files with 590 sensor columns + wafer ID
-2. **Validation**: Schema-based validation with 5-step process
-3. **Preprocessing**: KNN imputation, feature selection, normalization
-4. **Clustering**: K-Means clustering for pattern identification
-5. **Modeling**: Multi-algorithm approach (Random Forest, XGBoost)
-6. **Prediction**: Real-time fault detection with confidence scores
+2. **Data Validation**: Schema-based validation with Good/Bad file separation
+3. **Database Upload**: Only validated "good" files are uploaded to database
+4. **Data Export**: Validated data exported from database for processing
+5. **Preprocessing**: KNN imputation, feature selection, normalization
+6. **Clustering**: K-Means clustering for pattern identification
+7. **Modeling**: Multi-algorithm approach (Random Forest, XGBoost)
+8. **Prediction**: Real-time fault detection with confidence scores
 
 ### **Key Features**
-- **Automated Validation**: Comprehensive data quality checks
+- **Automated Validation**: Comprehensive data quality checks with Good/Bad file separation
 - **Scalable Architecture**: Cloud-based deployment
 - **Real-time Processing**: Instant fault detection
 - **Multi-model Approach**: Cluster-specific model selection
 - **Web Interface**: User-friendly upload and results display
 - **API Integration**: RESTful endpoints for programmatic access
+
+### **Data Validation Process**
+The system implements a robust validation pipeline that occurs **FIRST** in the workflow:
+
+1. **Input Validation**: Files are checked for proper naming conventions and format
+2. **Schema Validation**: Column structure and data types are validated against predefined schemas
+3. **Content Validation**: Data quality checks including null value detection
+4. **File Separation**: Valid files are moved to "good" directory, invalid files to "bad" directory
+5. **Error Reporting**: Detailed error logs are generated for rejected files
+6. **Pipeline Continuation**: Only "good" files proceed to database upload and subsequent processing
+
+This validation-first approach ensures data quality and prevents downstream processing errors.
 
 ### **Performance Metrics**
 - **Accuracy**: High prediction accuracy for fault detection

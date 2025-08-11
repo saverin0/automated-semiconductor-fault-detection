@@ -10,8 +10,8 @@ Our automated semiconductor fault detection system follows a comprehensive machi
 
 ### **Phase I: Model Training & Optimization**
 ```
-Start → Data (Batches) for Training → Data Validation → Data Transformation → 
-Data Insertion in Database → Export Data from Database to CSV → Data Preprocessing → 
+Start → Data (Batches) for Training → Data Validation & Good/Bad Separation → 
+Database Upload (Good Files Only) → Export Data from Database to CSV → Data Preprocessing → 
 Data Clustering → Get Best Model of Each Cluster → Hyperparameter Tuning
 ```
 
@@ -22,8 +22,8 @@ Hyperparameter Tuning → Model Saving → Cloud Setup → Pushing App to Cloud 
 
 ### **Phase III: Real-time Prediction**
 ```
-Application Start → Data from Client → Data Validation → Data Transformation → 
-Data Insertion in Database → Export Data from Database to CSV → Data Preprocessing → 
+Application Start → Data from Client → Data Validation & Good/Bad Separation → 
+Database Upload (Good Files Only) → Export Data from Database to CSV → Data Preprocessing → 
 Data Clustering → Model Call for Specific Cluster → Prediction → Export Prediction to CSV → End
 ```
 
@@ -51,6 +51,8 @@ Apart from training files, we also require a **"schema" file** from the client, 
 
 ## 🔍 Data Validation Process
 
+**This is the FIRST step in the pipeline** - Data validation occurs before any other processing to ensure data quality and prevent downstream errors.
+
 In this step, we perform different sets of validation on the given set of training files:
 
 ### 1. **Name Validation**
@@ -58,6 +60,7 @@ In this step, we perform different sets of validation on the given set of traini
 - Created a regex pattern as per the name given in the schema file for validation
 - Check for the length of date in the file name as well as the length of time in the file name
 - **Result**: Valid files → "Good_Data_Folder", Invalid files → "Bad_Data_Folder"
+- **Pipeline Impact**: Only files in "Good_Data_Folder" proceed to the next steps
 
 ### 2. **Number of Columns Validation**
 - Validate the number of columns present in the files
@@ -78,6 +81,8 @@ In this step, we perform different sets of validation on the given set of traini
 
 ## 🗄️ Data Insertion in Database
 
+**Note**: Only files that passed validation (in "Good_Data_Folder") are processed for database insertion.
+
 ### 1. **Database Creation and Connection**
 - Create a database with the given name passed
 - If the database is already created, open the connection to the database
@@ -92,6 +97,7 @@ In this step, we perform different sets of validation on the given set of traini
 - All files in the "Good_Data_Folder" are inserted in the above-created table
 - If any file has invalid data type in any of the columns, the file is not loaded
 - **Result**: Invalid files → "Bad_Data_Folder"
+- **Validation-First**: This step only processes files that already passed the validation phase
 
 ## 🤖 Model Training Process
 
@@ -208,15 +214,17 @@ Same database insertion process as training:
 
 ### Training Workflow:
 ```
-Schema File → Data Validation → Database Insertion → Data Export → 
+Schema File → Data Validation & Good/Bad Separation → Database Upload (Good Files Only) → Data Export → 
 Preprocessing → Clustering → Model Selection → Model Saving
 ```
 
 ### Prediction Workflow:
 ```
-Schema File → Data Validation → Database Insertion → Data Export → 
+Schema File → Data Validation & Good/Bad Separation → Database Upload (Good Files Only) → Data Export → 
 Preprocessing → Clustering → Model Loading → Prediction → Results Export
 ```
+
+**Key Principle**: Data validation occurs FIRST in both workflows, ensuring only quality data proceeds through the pipeline.
 
 ## 🎯 Key Features
 
